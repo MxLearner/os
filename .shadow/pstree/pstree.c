@@ -116,9 +116,9 @@ void list_proc_dirs(int proc, int p, int n, int n_layer)
     {
       for (int j = 0; j < n_layer; j++)
       {
-        printf("   ");
+        printf("|  ");
       }
-      printf("|——");
+      printf("——");
       list_proc_dirs(child_proc[i], p, n, n_layer + 1);
     }
   }
