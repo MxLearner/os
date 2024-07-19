@@ -14,10 +14,10 @@ libco:
 	@cd .. && make -s
 
 libco-test-64: main.c
-	gcc -I.. -L.. -m64 main.c -o libco-test-64 -lco-64
+	gcc -I.. -L.. -m64 main.c -o libco-test-64 -lco-64 -ggdb -O0
 
 libco-test-32: main.c
-	gcc -I.. -L.. -m32 main.c -o libco-test-32 -lco-32
+	gcc -I.. -L.. -m32 main.c -o libco-test-32 -lco-32 -ggdb -O0
 
 clean:
 	rm -f libco-test-*
