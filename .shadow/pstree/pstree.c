@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "pstree made by qiyi Wang\n");
     return 0;
   }
-  list_proc_dirs(1, p, n, 0);
+  list_proc_dirs(1, p, n, 1);
   return 0;
 }
 
