@@ -43,13 +43,13 @@ void stress_test()
         {
         case OP_ALLOC:
         {
-            printf("cpu_current:%s,alloc(%d)\n", cpu_current(), op.sz);
+            printf("cpu_current:%d,alloc(%d)\n", cpu_current(), op.sz);
             // void *ptr = pmm->alloc(op.sz);
             //  alloc_check(ptr, op.sz);
             break;
         }
         case OP_FREE:
-            printf("cpu_current:%s,free(%p)\n", cpu_current(), op.addr);
+            printf("cpu_current:%d,free(%p)\n", cpu_current(), op.addr);
             // free(op.addr);
             break;
         }
