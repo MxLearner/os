@@ -68,6 +68,7 @@ static void os_run()
     // }
     printf("Hello World from CPU #%d\n", cpu_current());
     printf("cup_count: %d\n", cpu_count());
+    stress_test();
     while (1)
         ;
 }
