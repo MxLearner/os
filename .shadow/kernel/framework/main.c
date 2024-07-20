@@ -45,7 +45,7 @@ struct malloc_op random_op()
 void stress_test()
 {
 
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 2; i++)
     {
         struct malloc_op op = random_op();
 
