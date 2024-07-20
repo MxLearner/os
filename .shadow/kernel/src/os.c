@@ -11,6 +11,7 @@ static void os_run()
     //     putch(*s == '*' ? '0' + cpu_current() : *s);
     // }
     printf("Hello World from CPU #%d\n", cpu_current());
+    printf("cup_count: %d\n", cpu_count());
     while (1)
         ;
 }
