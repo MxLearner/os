@@ -47,22 +47,23 @@ void stress_test()
 
     for (int i = 0; i < 2; i++)
     {
-        struct malloc_op op = random_op();
+        // struct malloc_op op = random_op();
 
-        switch (op.type)
-        {
-        case OP_ALLOC:
-        {
-            printf("cpu_current:%s,alloc(%d)\n", cpu_current(), op.sz);
-            // void *ptr = pmm->alloc(op.sz);
-            //  alloc_check(ptr, op.sz);
-            break;
-        }
-        case OP_FREE:
-            printf("cpu_current:%s,free(%p)\n", cpu_current(), op.addr);
-            // free(op.addr);
-            break;
-        }
+        // switch (op.type)
+        // {
+        // case OP_ALLOC:
+        // {
+        //     printf("cpu_current:%s,alloc(%d)\n", cpu_current(), op.sz);
+        //     // void *ptr = pmm->alloc(op.sz);
+        //     //  alloc_check(ptr, op.sz);
+        //     break;
+        // }
+        // case OP_FREE:
+        //     printf("cpu_current:%s,free(%p)\n", cpu_current(), op.addr);
+        //     // free(op.addr);
+        //     break;
+        // }
+        printf("Hello World from CPU #%d\n", cpu_current());
     }
 }
 
