@@ -72,6 +72,8 @@ int main()
 
     os->init();
     printf("cpu_count: %d\n", cpu_count());
-    mpe_init(os->run);
+    mpe_init(stress_test);
+    while (1)
+        ;
     return 0;
 }
