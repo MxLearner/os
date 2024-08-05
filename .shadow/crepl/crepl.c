@@ -13,7 +13,7 @@ int count = 0;
 void compile_function(const char *line)
 {
     int fd;
-    char fname[256];
+    char fname[250];
     char soName[256]; // 用于存储动态库的完整路径
 
     snprintf(fname, sizeof(fname), TEMPLATE);
