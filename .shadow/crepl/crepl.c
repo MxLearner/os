@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 
 #define MAX_FUNCS 200
-#define TEMPLATE "/tmp/creplXXXXXX"
+#define TEMPLATE "/tmp/creplXXXXXX.c"
 
 int count = 0;
 
@@ -14,7 +14,8 @@ void compile_function(const char *line)
 {
     int fd;
     char fname[250];
-    char soName[256]; // 用于存储动态库的完整路径
+    char c_fname[250]; // 用于存储新的临时文件名
+    char soName[256];  // 用于存储动态库的完整路径
 
     snprintf(fname, sizeof(fname), TEMPLATE);
     fd = mkstemp(fname);
@@ -23,15 +24,27 @@ void compile_function(const char *line)
         perror("Failed to create temporary file");
         return;
     }
+    // 构造新的文件名，添加.c后缀
+    snprintf(c_fname, sizeof(c_fname), "%s.c", fname);
 
-    // 写入 C 代码到临时文件
+    // 重命名文件
+    if (rename(fname, c_fname) == -1)
+    {
+        perror("Failed to rename file");
+        close(fd);
+        unlink(fname); // 尝试清理原始临时文件
+        return;
+    }
+
+    // 写入 C 代码到新的临时文件
     if (write(fd, line, strlen(line)) == -1)
     {
         perror("Failed to write to file");
         close(fd);
-        unlink(fname); // 清理临时文件
+        unlink(c_fname); // 清理新的临时文件
         return;
     }
+
     close(fd);
 
     // 构建动态库的完整路径名
@@ -46,7 +59,7 @@ void compile_function(const char *line)
     else if (pid == 0)
     {
         // 在子进程中编译源代码到动态库
-        execlp("gcc", "gcc", "-shared", "-fPIC", fname, "-o", soName, NULL);
+        execlp("gcc", "gcc", "-shared", "-fPIC", c_fname, "-o", soName, NULL);
         perror("Failed to compile");
         _exit(1); // 确保子进程退出
     }
