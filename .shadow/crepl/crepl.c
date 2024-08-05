@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <dlfcn.h>
@@ -65,7 +66,7 @@ int main(int argc, char *argv[])
             break;
         }
 
-        if (strncomp(line, "int", 4) == 0)
+        if (strncmp(line, "int", 4) == 0)
         {
             complie_function(line);
         }
