@@ -10,10 +10,12 @@
 
 int count = 0;
 
-void complie_function(const char *line)
+void compile_function(const char *line)
 {
     int fd;
     char fname[256];
+    char soName[256]; // 用于存储动态库的完整路径
+
     snprintf(fname, sizeof(fname), TEMPLATE);
     fd = mkstemp(fname);
     if (fd == -1)
@@ -22,8 +24,18 @@ void complie_function(const char *line)
         return;
     }
 
-    write(fd, line, strlen(line));
+    // 写入 C 代码到临时文件
+    if (write(fd, line, strlen(line)) == -1)
+    {
+        perror("Failed to write to file");
+        close(fd);
+        unlink(fname); // 清理临时文件
+        return;
+    }
     close(fd);
+
+    // 构建动态库的完整路径名
+    snprintf(soName, sizeof(soName), "%s.so", fname);
 
     pid_t pid = fork();
     if (pid == -1)
@@ -33,23 +45,25 @@ void complie_function(const char *line)
     }
     else if (pid == 0)
     {
-        execlp("gcc", "gcc", "-shared", "-fPIC", fname, "-o", "tmp.so", NULL);
+        // 在子进程中编译源代码到动态库
+        execlp("gcc", "gcc", "-shared", "-fPIC", fname, "-o", soName, NULL);
         perror("Failed to compile");
-        _exit(1);
+        _exit(1); // 确保子进程退出
     }
     else
     {
         int status;
         waitpid(pid, &status, 0);
+        unlink(fname); // 删除源代码文件
         if (status != 0)
         {
             fprintf(stderr, "Compilation failed\n");
+            unlink(soName); // 如果编译失败，也删除动态库文件
             return;
         }
     }
-    printf("Compiled successfully\n");
+    printf("Compiled successfully to %s\n", soName);
 }
-
 void execute_expression(const char *line)
 {
 }
