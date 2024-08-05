@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
             break;
         }
 
-        if (strncmp(line, "int", 4) == 0)
+        if (strncmp(line, "int", 3) == 0)
         {
             complie_function(line);
         }
