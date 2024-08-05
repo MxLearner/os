@@ -103,13 +103,17 @@ int main(int argc, char *argv[])
         fflush(stdout);
         if (!fgets(line, sizeof(line), stdin))
         {
-            cleanup_files();
             break;
         }
 
         if (strncmp(line, "int", 3) == 0)
         {
             compile_function(line);
+        }
+        else if (strncmp(line, "exit", 4) == 0)
+        {
+            cleanup_files();
+            break;
         }
         else
         {
