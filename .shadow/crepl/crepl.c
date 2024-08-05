@@ -8,7 +8,18 @@
 #define MAX_FUNCS 200
 #define TEMPLATE "/tmp/creplXXXXXX"
 
-int count = 0;
+char c_files[MAX_FUNCS][256];  // 用于存储所有.c文件的路径
+char so_files[MAX_FUNCS][256]; // 用于存储所有.so文件的路径
+int file_count = 0;            // 记录文件数量
+
+void cleanup_files()
+{
+    for (int i = 0; i < file_count; ++i)
+    {
+        unlink(c_files[i]);  // 删除所有.c文件
+        unlink(so_files[i]); // 删除所有.so文件
+    }
+}
 
 void compile_function(const char *line)
 {
@@ -91,6 +102,7 @@ int main(int argc, char *argv[])
         fflush(stdout);
         if (!fgets(line, sizeof(line), stdin))
         {
+            cleanup_files();
             break;
         }
 
