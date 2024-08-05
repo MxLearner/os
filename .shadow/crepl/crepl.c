@@ -102,8 +102,10 @@ void compile_function(const char *line)
     }
 
     char func_name[256];
-    sscanf(line, "int %s(", func_name);
-    func_name[strlen(func_name) - 1] = '\0'; // 删除最后一个字符，即'('
+    sscanf(line, "int %s", func_name);
+    char *paren = strchr(func_name, '(');
+    if (paren)
+        *paren = '\0'; // Strip off the parameter list
     func_ptrs[file_count] = dlsym(handle, func_name);
     strcpy(func_names[file_count], func_name);
     printf("Loaded function %s\n", func_name);
