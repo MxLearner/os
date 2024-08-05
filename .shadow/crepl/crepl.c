@@ -6,10 +6,11 @@
 #include <sys/wait.h>
 
 #define MAX_FUNCS 200
+#define MAX_FILES 1000 // 假设最多处理1000个文件
 #define TEMPLATE "/tmp/creplXXXXXX"
 
-char c_files[MAX_FUNCS][256];  // 用于存储所有.c文件的路径
-char so_files[MAX_FUNCS][256]; // 用于存储所有.so文件的路径
+char c_files[MAX_FILES][256];  // 用于存储所有.c文件的路径
+char so_files[MAX_FILES][256]; // 用于存储所有.so文件的路径
 int file_count = 0;            // 记录文件数量
 
 void cleanup_files()
@@ -38,6 +39,7 @@ void compile_function(const char *line)
     }
     // 构造新的文件名，添加.c后缀
     snprintf(c_fname, sizeof(c_fname), "%s.c", fname);
+    strcpy(c_files[file_count], c_fname); // 存储.c文件路径
 
     // 重命名文件
     if (rename(fname, c_fname) == -1)
@@ -61,6 +63,8 @@ void compile_function(const char *line)
 
     // 构建动态库的完整路径名
     snprintf(soName, sizeof(soName), "%s.so", fname);
+    strcpy(so_files[file_count], soName); // 存储.so文件路径
+    file_count++;
 
     pid_t pid = fork();
     if (pid == -1)
@@ -79,7 +83,6 @@ void compile_function(const char *line)
     {
         int status;
         waitpid(pid, &status, 0);
-        unlink(fname); // 删除源代码文件
         if (status != 0)
         {
             fprintf(stderr, "Compilation failed\n");
@@ -88,9 +91,6 @@ void compile_function(const char *line)
         }
     }
     printf("Compiled successfully to %s\n", soName);
-}
-void execute_expression(const char *line)
-{
 }
 
 int main(int argc, char *argv[])
@@ -103,6 +103,7 @@ int main(int argc, char *argv[])
         fflush(stdout);
         if (!fgets(line, sizeof(line), stdin))
         {
+            cleanup_files(); // 清理所有文件
             break;
         }
 
@@ -110,14 +111,10 @@ int main(int argc, char *argv[])
         {
             compile_function(line);
         }
-        else if (strncmp(line, "exit", 4) == 0)
-        {
-            cleanup_files();
-            break;
-        }
         else
         {
-            execute_expression(line);
+            // execute_expression(line);  // 执行其他表达式
         }
     }
+    return 0;
 }
