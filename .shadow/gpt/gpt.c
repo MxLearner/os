@@ -133,63 +133,63 @@ void *matmul_thread(void *arg)
     return NULL;
 }
 
-// void matmul_forward(float *out,
-//                     float *inp, float *weight, float *bias,
-//                     int B, int T, int C, int OC)
-// {
-//     for (int b = 0; b < B; b++)
-//     {
-//         int num_threads = 4;
-//         pthread_t threads[num_threads];
-//         ThreadData thread_data[num_threads];
-//         int T_per_thread = T / num_threads;
-//         for (int i = 0; i < num_threads; i++)
-//         {
-//             thread_data[i].out = out;
-//             thread_data[i].inp = inp;
-//             thread_data[i].weight = weight;
-//             thread_data[i].bias = bias;
-//             thread_data[i].B = B;
-//             thread_data[i].T = T;
-//             thread_data[i].C = C;
-//             thread_data[i].OC = OC;
-//             thread_data[i].T_start = i * T_per_thread;
-//             thread_data[i].T_end = (i == num_threads - 1) ? T : (i + 1) * T_per_thread;
-//             pthread_create(&threads[i], NULL, matmul_thread, (void *)&thread_data[i]);
-//         }
-//         for (int i = 0; i < num_threads; i++)
-//         {
-//             pthread_join(threads[i], NULL);
-//         }
-//     }
-// }
 void matmul_forward(float *out,
                     float *inp, float *weight, float *bias,
                     int B, int T, int C, int OC)
 {
-    // most of the running time is spent here and in matmul_backward
-    // OC is short for "output channels"
-    // inp is (B,T,C), weight is (OC, C), bias is (OC)
-    // out will be (B,T,OC)
     for (int b = 0; b < B; b++)
     {
-        for (int t = 0; t < T; t++)
+        int num_threads = 4;
+        pthread_t threads[num_threads];
+        ThreadData thread_data[num_threads];
+        int T_per_thread = T / num_threads;
+        for (int i = 0; i < num_threads; i++)
         {
-            float *out_bt = out + b * T * OC + t * OC;
-            float *inp_bt = inp + b * T * C + t * C;
-            for (int o = 0; o < OC; o++)
-            {
-                float val = (bias != NULL) ? bias[o] : 0.0f;
-                float *wrow = weight + o * C;
-                for (int i = 0; i < C; i++)
-                {
-                    val += inp_bt[i] * wrow[i];
-                }
-                out_bt[o] = val;
-            }
+            thread_data[i].out = out;
+            thread_data[i].inp = inp;
+            thread_data[i].weight = weight;
+            thread_data[i].bias = bias;
+            thread_data[i].B = B;
+            thread_data[i].T = T;
+            thread_data[i].C = C;
+            thread_data[i].OC = OC;
+            thread_data[i].T_start = i * T_per_thread;
+            thread_data[i].T_end = (i == num_threads - 1) ? T : (i + 1) * T_per_thread;
+            pthread_create(&threads[i], NULL, matmul_thread, (void *)&thread_data[i]);
+        }
+        for (int i = 0; i < num_threads; i++)
+        {
+            pthread_join(threads[i], NULL);
         }
     }
 }
+// void matmul_forward(float *out,
+//                     float *inp, float *weight, float *bias,
+//                     int B, int T, int C, int OC)
+// {
+//     // most of the running time is spent here and in matmul_backward
+//     // OC is short for "output channels"
+//     // inp is (B,T,C), weight is (OC, C), bias is (OC)
+//     // out will be (B,T,OC)
+//     for (int b = 0; b < B; b++)
+//     {
+//         for (int t = 0; t < T; t++)
+//         {
+//             float *out_bt = out + b * T * OC + t * OC;
+//             float *inp_bt = inp + b * T * C + t * C;
+//             for (int o = 0; o < OC; o++)
+//             {
+//                 float val = (bias != NULL) ? bias[o] : 0.0f;
+//                 float *wrow = weight + o * C;
+//                 for (int i = 0; i < C; i++)
+//                 {
+//                     val += inp_bt[i] * wrow[i];
+//                 }
+//                 out_bt[o] = val;
+//             }
+//         }
+//     }
+// }
 
 void attention_forward(float *out, float *preatt, float *att,
                        float *inp,
