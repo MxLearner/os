@@ -16,4 +16,6 @@ proc = subprocess.Popen(
 
 while (line := proc.stdout.readline()):
     token = int(line)
-    print(enc.decode([token]), end='', flush=True)
+    print(enc.decode([token]), end=' ', flush=True)
+
+print('\n')
