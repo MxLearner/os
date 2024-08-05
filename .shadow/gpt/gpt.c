@@ -139,7 +139,7 @@ void matmul_forward(float *out,
 {
     for (int b = 0; b < B; b++)
     {
-        int num_threads = 5;
+        int num_threads = 2;
         pthread_t threads[num_threads];
         ThreadData thread_data[num_threads];
         int T_per_thread = T / num_threads;
