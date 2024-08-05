@@ -25,7 +25,7 @@ void compile_function(const char *line)
         return;
     }
     // 构造新的文件名，添加.c后缀
-    snprintf(c_fname, sizeof(c_fname), "%s.c", fname);
+    snprintf(c_fname, sizeof(c_fname), "%s", fname);
 
     // 重命名文件
     if (rename(fname, c_fname) == -1)
