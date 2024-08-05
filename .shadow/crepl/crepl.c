@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 
         if (strncmp(line, "int", 3) == 0)
         {
-            complie_function(line);
+            compile_function(line);
         }
         else
         {
