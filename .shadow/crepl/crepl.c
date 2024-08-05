@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 
 #define MAX_FUNCS 200
-#define TEMPLATE "/tmp/creplXXXXXX.c"
+#define TEMPLATE "/tmp/creplXXXXXX"
 
 int count = 0;
 
