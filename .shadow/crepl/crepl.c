@@ -47,6 +47,7 @@ void complie_function(const char *line)
             return;
         }
     }
+    printf("Compiled successfully\n");
 }
 
 void execute_expression(const char *line)
