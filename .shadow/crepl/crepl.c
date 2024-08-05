@@ -163,7 +163,7 @@ void execute_expression(char *expr)
     else if (pid == 0)
     {
         // 在子进程中编译源代码到动态库
-        execlp("gcc", "gcc", "-shared", "-fPIC", c_fname, "-o", soName, NULL);
+        execlp("gcc", "gcc", "-Wno-implicit-function-declaration", "-shared", "-fPIC", c_fname, "-o", soName, NULL);
         perror("Failed to compile");
         _exit(1); // 确保子进程退出
     }
