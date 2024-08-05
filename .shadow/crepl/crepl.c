@@ -18,6 +18,7 @@ void cleanup_files()
     {
         unlink(c_files[i]);  // 删除所有.c文件
         unlink(so_files[i]); // 删除所有.so文件
+        printf("Deleted %s\n", c_files[i]);
     }
 }
 
