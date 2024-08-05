@@ -1,14 +1,17 @@
 #include <stdio.h>
 #include <string.h>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     static char line[4096];
 
-    while (1) {
+    while (1)
+    {
         printf("crepl> ");
         fflush(stdout);
-
-        if (!fgets(line, sizeof(line), stdin)) {
+        sleep(1);
+        if (!fgets(line, sizeof(line), stdin))
+        {
             break;
         }
 
