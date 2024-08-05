@@ -14,7 +14,7 @@ void compile_function(const char *line)
 {
     int fd;
     char fname[250];
-    char c_fname[250]; // 用于存储新的临时文件名
+    char c_fname[256]; // 用于存储新的临时文件名
     char soName[256];  // 用于存储动态库的完整路径
 
     snprintf(fname, sizeof(fname), TEMPLATE);
