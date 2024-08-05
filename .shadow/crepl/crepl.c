@@ -12,6 +12,8 @@
 char c_files[MAX_FILES][256];  // 用于存储所有.c文件的路径
 char so_files[MAX_FILES][256]; // 用于存储所有.so文件的路径
 int file_count = 0;            // 记录文件数量
+char func_names[MAX_FILES][256];
+void *func_ptrs[MAX_FILES];
 
 void cleanup_files()
 {
@@ -20,6 +22,7 @@ void cleanup_files()
         unlink(c_files[i]);  // 删除所有.c文件
         unlink(so_files[i]); // 删除所有.so文件
         printf("Deleted %s\n", c_files[i]);
+        printf("Deleted %s\n", so_files[i]);
     }
 }
 
@@ -64,7 +67,6 @@ void compile_function(const char *line)
     // 构建动态库的完整路径名
     snprintf(soName, sizeof(soName), "%s.so", fname);
     strcpy(so_files[file_count], soName); // 存储.so文件路径
-    file_count++;
 
     pid_t pid = fork();
     if (pid == -1)
@@ -91,6 +93,20 @@ void compile_function(const char *line)
         }
     }
     printf("Compiled successfully to %s\n", soName);
+
+    void *handle = dlopen(soName, RTLD_LAZY);
+    if (!handle)
+    {
+        fprintf(stderr, "Failed to load %s: %s\n", soName, dlerror());
+        return;
+    }
+
+    char func_name[256];
+    sscanf(line, "int %s(", func_name);
+    func_name[strlen(func_name) - 1] = '\0'; // 删除最后一个字符，即'('
+    func_ptrs[file_count] = dlsym(handle, func_name);
+    strcpy(func_names[file_count], func_name);
+    file_count++;
 }
 
 int main(int argc, char *argv[])
