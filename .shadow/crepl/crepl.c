@@ -109,6 +109,38 @@ void compile_function(const char *line)
     file_count++;
 }
 
+void execute_expression(char *expr)
+{
+    char filename[] = "/tmp/crepl_expr_XXXXXX.c";
+    int fd = mkstemps(filename, 2); // Create and open a temporary file with a ".c" extension
+    if (fd == -1)
+    {
+        perror("Failed to create temporary file for expression");
+        return;
+    }
+
+    FILE *f = fdopen(fd, "w");
+    fprintf(f, "#include <stdio.h>\n");
+    for (int i = 0; i < file_count; i++)
+    {
+        fprintf(f, "int %s();\n", func_names[i]);
+    }
+    fprintf(f, "int main() { printf(\"%%d\\n\", %s); return 0; }\n", expr);
+    fclose(f);
+
+    char outname[256];
+    sprintf(outname, "/tmp/crepl_expr_%d", getpid());
+    char command[512];
+    sprintf(command, "gcc %s -o %s -ldl", filename, outname);
+    system(command); // Compile the file
+
+    sprintf(command, "%s", outname);
+    system(command); // Execute the compiled program
+
+    unlink(filename); // Cleanup
+    unlink(outname);
+}
+
 int main(int argc, char *argv[])
 {
     static char line[4096];
@@ -129,7 +161,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            // execute_expression(line);  // 执行其他表达式
+            execute_expression(line); // 执行其他表达式
         }
     }
     return 0;
