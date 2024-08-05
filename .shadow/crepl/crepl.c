@@ -106,6 +106,7 @@ void compile_function(const char *line)
     func_name[strlen(func_name) - 1] = '\0'; // 删除最后一个字符，即'('
     func_ptrs[file_count] = dlsym(handle, func_name);
     strcpy(func_names[file_count], func_name);
+    printf("Loaded function %s\n", func_name);
     file_count++;
 }
 
