@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 
 #define MAX_FUNCS 200
-#define TEMPLATE "/tmp/crepl_%d"
+#define TEMPLATE "/tmp/creplXXXXXX"
 
 int count = 0;
 
@@ -14,7 +14,7 @@ void complie_function(const char *line)
 {
     int fd;
     char fname[256];
-    snprintf(fname, sizeof(fname), TEMPLATE, count++);
+    snprintf(fname, sizeof(fname), TEMPLATE);
     fd = mkstemp(fname);
     if (fd == -1)
     {
