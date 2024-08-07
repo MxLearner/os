@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
     if (pid == 0) // Child process
     {
         close(pipefd[0]);
+        dup2(pipefd[1], 2);
         dup2(pipefd[1], 1);
         execve("/usr/bin/strace", exec_argv, exec_envp);
         perror("execve");
@@ -57,8 +58,7 @@ int main(int argc, char *argv[])
     }
     else // Parent process
     {
-        waitpid(pid, NULL, WNOHANG); // 回收子进程资源
-        close(pipefd[1]);            // 关闭父进程中的写端
+        close(pipefd[1]); // 关闭父进程中的写端
 
         while (1)
         {
