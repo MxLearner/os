@@ -54,13 +54,31 @@ int main(int argc, char *argv[])
     }
     else
     {
-        wait(NULL);
-        close(pipefd[1]);
-        int n = read(pipefd[0], buffer, sizeof(buffer));
-        assert(n > 0);
-        buffer[n] = '\0';
-        printf("%s", buffer);
-        close(pipefd[0]);
+        close(pipefd[1]); // 关闭父进程中的写端
+
+        while (1)
+        {
+            int n = read(pipefd[0], buffer, sizeof(buffer) - 1); // 留出一个字符位置给终结符
+            if (n > 0)
+            {
+                buffer[n] = '\0'; // 确保字符串正确终结
+                printf("%s", buffer);
+            }
+            else if (n == 0)
+            {
+                // 当没有数据可读时，read返回0，这意味着管道写端已经被所有持有者关闭
+                break;
+            }
+            else
+            {
+                // 如果read返回-1，可能出现错误
+                perror("read");
+                break;
+            }
+        }
+
+        close(pipefd[0]); // 关闭读端
+        wait(NULL);       // 等待子进程结束
     }
 
     return 0;
