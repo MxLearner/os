@@ -5,9 +5,12 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <assert.h>
+#include <signal.h>
 
 int main(int argc, char *argv[])
 {
+    signal(SIGPIPE, SIG_IGN);
+
     char *exec_argv[256];
     char *exec_envp[256];
 
