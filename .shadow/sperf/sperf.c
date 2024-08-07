@@ -21,8 +21,12 @@ int main(int argc, char *argv[])
     snprintf(path_str, sizeof(path_str), "PATH=%s", path_env);
 
     exec_argv[0] = "strace";
-    exec_argv[1] = "ls";
-    exec_argv[2] = NULL;
+
+    for (int i = 1; i < argc; i++)
+    {
+        exec_argv[i] = argv[i];
+    }
+    exec_argv[argc] = NULL;
     exec_envp[0] = path_str;
     exec_envp[1] = NULL;
 
