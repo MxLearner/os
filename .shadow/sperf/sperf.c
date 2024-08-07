@@ -57,11 +57,12 @@ int main(int argc, char *argv[])
     }
     else // Parent process
     {
-        close(pipefd[1]); // 关闭父进程中的写端
+        waitpid(pid, NULL, WNOHANG); // 回收子进程资源
+        close(pipefd[1]);            // 关闭父进程中的写端
 
         while (1)
         {
-            waitpid(pid, NULL, WNOHANG); // 回收子进程资源
+
             int status;
             pid_t result = waitpid(pid, &status, WNOHANG); // Non-blocking wait
             if (result == 0)
