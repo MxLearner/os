@@ -50,13 +50,13 @@ int main(int argc, char *argv[])
     }
     else
     {
+        wait(NULL);
         close(pipefd[1]);
         int n = read(pipefd[0], buffer, sizeof(buffer));
         assert(n > 0);
         buffer[n] = '\0';
         printf("%s", buffer);
         close(pipefd[0]);
-        wait(NULL);
     }
 
     return 0;
