@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
             else if (n == 0)
             {
                 // 当没有数据可读时，read返回0，这意味着管道写端已经被所有持有者关闭
-                break;
+                // break;
             }
             else
             {
