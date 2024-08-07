@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     if (pid == 0) // Child process
     {
         close(pipefd[0]);
-        dup2(pipefd[1], 2);
+        // dup2(pipefd[1], 2);
         execve("/usr/bin/strace", exec_argv, exec_envp);
         perror("execve");
         exit(1);
