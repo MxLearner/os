@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     if (pid == 0) // Child process
     {
         close(pipefd[0]);
-        // dup2(pipefd[1], 2);
+        dup2(pipefd[1], 2);
         execve("/usr/bin/strace", exec_argv, exec_envp);
         perror("execve");
         exit(1);
@@ -76,6 +76,12 @@ int main(int argc, char *argv[])
             }
             else
             {
+                int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
+                if (n > 0)
+                {
+                    buffer[n] = '\0';
+                    printf("%s", buffer);
+                }
                 // 子进程已结束
                 break;
             }
