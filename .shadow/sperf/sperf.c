@@ -47,42 +47,42 @@ int main(int argc, char *argv[])
         perror("fork");
         exit(1);
     }
-    if (pid == 0)
+    if (pid == 0) // Child process
     {
-        signal(SIGPIPE, SIG_IGN);
         close(pipefd[0]);
         dup2(pipefd[1], 1);
         execve("/usr/bin/strace", exec_argv, exec_envp);
         perror("execve");
         exit(1);
     }
-    else
+    else // Parent process
     {
         close(pipefd[1]); // 关闭父进程中的写端
 
         while (1)
         {
-            int n = read(pipefd[0], buffer, sizeof(buffer) - 1); // 留出一个字符位置给终结符
-            if (n > 0)
+            int status;
+            pid_t result = waitpid(pid, &status, WNOHANG); // Non-blocking wait
+            if (result == 0)
             {
-                buffer[n] = '\0'; // 确保字符串正确终结
-                printf("%s", buffer);
-            }
-            else if (n == 0)
-            {
-                // 当没有数据可读时，read返回0，这意味着管道写端已经被所有持有者关闭
-                break;
+                // 子进程还在运行
+                int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
+                if (n > 0)
+                {
+                    buffer[n] = '\0';
+                    printf("%s", buffer);
+                }
+                usleep(100000); // 等待 100 毫秒
             }
             else
             {
-                // 如果read返回-1，可能出现错误
-                perror("read");
+                // 子进程已结束
                 break;
             }
         }
 
-        // close(pipefd[0]); // 关闭读端
-        wait(NULL); // 等待子进程结束
+        close(pipefd[0]); // 关闭读端
+        wait(NULL);       // 确保子进程资源被回收
     }
 
     return 0;
