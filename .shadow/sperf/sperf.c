@@ -10,10 +10,20 @@ int main(int argc, char *argv[])
 {
     char *exec_argv[256];
     char *exec_envp[256];
+
+    char path_env = getenv("PATH");
+    if (path_env == NULL)
+    {
+        perror("getenv");
+        exit(1);
+    }
+    char path_str[1024];
+    snprintf(path_str, sizeof(path_str), "PATH=%s", path_env);
+
     exec_argv[0] = "strace";
     exec_argv[1] = "ls";
     exec_argv[2] = NULL;
-    exec_envp[0] = "PATH=/bin";
+    exec_envp[0] = path_str;
     exec_envp[1] = NULL;
 
     pid_t pid = fork();
