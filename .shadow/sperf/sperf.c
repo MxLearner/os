@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
         perror("getenv");
         exit(1);
     }
-    char path_str[1024];
+    char path_str[10240];
     snprintf(path_str, sizeof(path_str), "PATH=%s", path_env);
 
     exec_argv[0] = "strace";
