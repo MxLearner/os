@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
             pid_t result = waitpid(pid, &status, WNOHANG); // Non-blocking wait
             if (result == 0)
             {
-                usleep(100000); // 等待 100 毫秒
+                usleep(10000000); // 等待 100 毫秒
                 // 子进程还在运行
                 int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
                 if (n > 0)
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
                     buffer[n] = '\0';
                     printf("%s", buffer);
                 }
-                        }
+            }
             else
             {
                 // 子进程已结束
