@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
                 if (n > 0)
                 {
                     buffer[n] = '\0';
-                    // printf("%s", buffer);
+                    printf("%s", buffer);
                 }
             }
             else
