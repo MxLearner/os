@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
                 usleep(100000); // 等待 100 毫秒
                 // 子进程还在运行
                 int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
-                if (n > 0)
+                if (n >= 0)
                 {
                     buffer[n] = '\0';
                     printf("%s", buffer);
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
             else
             {
                 int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
-                if (n > 0)
+                if (n >= 0)
                 {
                     buffer[n] = '\0';
                     printf("%s", buffer);
