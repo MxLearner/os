@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <assert.h>
+signal(SIGPIPE, SIG_IGN);
 
 int main(int argc, char *argv[])
 {
