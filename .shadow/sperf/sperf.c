@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
                 int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
                 if (n >= 0)
                 {
-                    buffer[n] = '\0';
+                    // buffer[n] = '\0';
                     printf("%s", buffer);
                 }
             }
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
                 int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
                 if (n >= 0)
                 {
-                    buffer[n] = '\0';
+                    // buffer[n] = '\0';
                     printf("%s", buffer);
                 }
                 // 子进程已结束
