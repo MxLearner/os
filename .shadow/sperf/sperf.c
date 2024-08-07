@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
 
         while (1)
         {
+            waitpid(pid, NULL, WNOHANG); // 回收子进程资源
             int status;
             pid_t result = waitpid(pid, &status, WNOHANG); // Non-blocking wait
             if (result == 0)
