@@ -8,7 +8,6 @@
 
 int main(int argc, char *argv[])
 {
-    signal(SIGPIPE, SIG_IGN);
     char *exec_argv[256];
     char *exec_envp[256];
 
@@ -78,8 +77,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        close(pipefd[0]); // 关闭读端
-        wait(NULL);       // 等待子进程结束
+        // close(pipefd[0]); // 关闭读端
+        wait(NULL); // 等待子进程结束
     }
 
     return 0;
