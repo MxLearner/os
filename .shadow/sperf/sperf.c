@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
     }
     if (pid == 0)
     {
+        signal(SIGPIPE, SIG_IGN);
         close(pipefd[0]);
         dup2(pipefd[1], 1);
         execve("/usr/bin/strace", exec_argv, exec_envp);
