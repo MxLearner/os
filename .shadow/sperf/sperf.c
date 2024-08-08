@@ -117,7 +117,8 @@ int main(int argc, char *argv[])
         }
 
         close(pipefd[0]); // Close read end
-        wait(NULL);       // Ensure child process resources are reclaimed
+        fflush(stdout);
+        wait(NULL); // Ensure child process resources are reclaimed
     }
 
     return 0;
