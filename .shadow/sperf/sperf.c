@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
         dup2(dev_null_fd, 1); // Redirect stdout to /dev/null
 
         // Redirect standard error to pipe
-        // dup2(pipefd[1], 2);
+        dup2(pipefd[1], 2);
         close(pipefd[1]); // Close the duplicated file descriptor
 
         execve("/usr/bin/strace", exec_argv, exec_envp);
@@ -77,47 +77,8 @@ int main(int argc, char *argv[])
     else // Parent process
     {
         close(pipefd[1]); // Close write end
-
-        while (1)
-        {
-            int status;
-            pid_t result = waitpid(pid, &status, WNOHANG); // Non-blocking wait
-            if (result == 0)
-            {
-                usleep(100000); // Wait 100 milliseconds
-                gettimeofday(&current_time, NULL);
-                long elapsed = (current_time.tv_sec - last_time.tv_sec) * 1000000L + (current_time.tv_usec - last_time.tv_usec);
-                if (elapsed >= 100000) // 100 milliseconds
-                {
-                    int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
-                    if (n > 0)
-                    {
-                        buffer[n] = '\0';
-                        printf("%s", buffer);
-                        fflush(stdout);
-                        last_time = current_time;
-                    }
-                }
-            }
-            else
-            {
-                // Child process has terminated
-                int n = 0;
-                do
-                {
-                    n = read(pipefd[0], buffer, sizeof(buffer) - 1);
-                    if (n > 0)
-                    {
-                        buffer[n] = '\0';
-                        printf("%s", buffer);
-                    }
-                } while (n > 0);
-                break;
-            }
-        }
-
-        close(pipefd[0]); // Close read end
-        fflush(stdout);
+        int n = read(pipefd[0], buffer, sizeof(buffer));
+        write(STDOUT_FILENO, buffer, n);
         wait(NULL); // Ensure child process resources are reclaimed
     }
 
