@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
     pid_t pid = fork();
     int pipefd[2];
-    char buffer[10240];
+    char buffer[10];
     if (pipe(pipefd) == -1)
     {
         perror("pipe");
@@ -49,9 +49,6 @@ int main(int argc, char *argv[])
         perror("fork");
         exit(1);
     }
-
-    struct timeval last_time, current_time;
-    gettimeofday(&last_time, NULL);
 
     if (pid == 0) // Child process
     {
