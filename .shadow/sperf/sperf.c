@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     else // Parent process
     {
         // wait(NULL);       // Ensure child process resources are reclaimed
-        close(pipefd[1]); // Close write end
+        // close(pipefd[1]); // Close write end
         int n = read(pipefd[0], buffer, sizeof(buffer));
         write(STDOUT_FILENO, buffer, n);
         wait(NULL); // Ensure child process resources are reclaimed
