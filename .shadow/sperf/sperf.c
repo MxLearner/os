@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <signal.h>
+#include <sys/time.h>
+#include <fcntl.h> // Required for open()
 
 int main(int argc, char *argv[])
 {
@@ -47,50 +49,74 @@ int main(int argc, char *argv[])
         perror("fork");
         exit(1);
     }
+
+    struct timeval last_time, current_time;
+    gettimeofday(&last_time, NULL);
+
     if (pid == 0) // Child process
     {
-        close(pipefd[0]);
+        close(pipefd[0]); // Close read end
+
+        // Redirect standard output to /dev/null
+        int dev_null_fd = open("/dev/null", O_WRONLY);
+        if (dev_null_fd == -1)
+        {
+            perror("open /dev/null");
+            exit(1);
+        }
+        dup2(dev_null_fd, 1); // Redirect stdout to /dev/null
+
+        // Redirect standard error to pipe
         dup2(pipefd[1], 2);
-        dup2(pipefd[1], 1);
+        close(pipefd[1]); // Close the duplicated file descriptor
+
         execve("/usr/bin/strace", exec_argv, exec_envp);
         perror("execve");
         exit(1);
     }
     else // Parent process
     {
-        close(pipefd[1]); // 关闭父进程中的写端
+        close(pipefd[1]); // Close write end
 
         while (1)
         {
-
             int status;
             pid_t result = waitpid(pid, &status, WNOHANG); // Non-blocking wait
             if (result == 0)
             {
-                usleep(100000); // 等待 100 毫秒
-                // 子进程还在运行
-                int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
-                if (n >= 0)
+                usleep(100000); // Wait 100 milliseconds
+                gettimeofday(&current_time, NULL);
+                long elapsed = (current_time.tv_sec - last_time.tv_sec) * 1000000L + (current_time.tv_usec - last_time.tv_usec);
+                if (elapsed >= 100000) // 100 milliseconds
                 {
-                    // buffer[n] = '\0';
-                    printf("%s", buffer);
+                    int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
+                    if (n > 0)
+                    {
+                        buffer[n] = '\0';
+                        printf("%s", buffer);
+                        fflush(stdout);
+                        last_time = current_time;
+                    }
                 }
             }
             else
             {
-                int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
-                if (n >= 0)
+                // Child process has terminated
+                do
                 {
-                    // buffer[n] = '\0';
-                    printf("%s", buffer);
-                }
-                // 子进程已结束
+                    int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
+                    if (n > 0)
+                    {
+                        buffer[n] = '\0';
+                        printf("%s", buffer);
+                    }
+                } while (n > 0);
                 break;
             }
         }
 
-        close(pipefd[0]); // 关闭读端
-        wait(NULL);       // 确保子进程资源被回收
+        close(pipefd[0]); // Close read end
+        wait(NULL);       // Ensure child process resources are reclaimed
     }
 
     return 0;
