@@ -64,8 +64,8 @@ int main(int argc, char *argv[])
         dup2(dev_null_fd, 1); // Redirect stdout to /dev/null
 
         // Redirect standard error to pipe
-        // dup2(pipefd[1], 2);
-        close(pipefd[1]); // Close the duplicated file descriptor
+        dup2(pipefd[1], 2);
+        // close(pipefd[1]); // Close the duplicated file descriptor
 
         execve("/usr/bin/strace", exec_argv, exec_envp);
         perror("execve");
