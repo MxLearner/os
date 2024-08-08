@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         // wait(NULL);       // Ensure child process resources are reclaimed
         close(pipefd[1]); // Close write end
 
-        while (read(pipefd[0], buffer, sizeof(buffer)) >= 0)
+        while (read(pipefd[0], buffer, sizeof(buffer)) > 0)
         {
             write(STDOUT_FILENO, buffer, sizeof(buffer));
         }
