@@ -102,9 +102,10 @@ int main(int argc, char *argv[])
             else
             {
                 // Child process has terminated
+                int n = 0;
                 do
                 {
-                    int n = read(pipefd[0], buffer, sizeof(buffer) - 1);
+                    n = read(pipefd[0], buffer, sizeof(buffer) - 1);
                     if (n > 0)
                     {
                         buffer[n] = '\0';
