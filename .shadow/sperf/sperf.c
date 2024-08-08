@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
     pid_t pid = fork();
     int pipefd[2];
-    char buffer[10];
+    char buffer[1024];
     if (pipe(pipefd) == -1)
     {
         perror("pipe");
