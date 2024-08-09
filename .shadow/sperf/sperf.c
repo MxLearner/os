@@ -71,9 +71,9 @@ int main(int argc, char *argv[])
             exit(1);
         }
         close(pipefd[1]); // Close the duplicated file descriptor
-
-        execve("/usr/bin/strace", exec_argv, exec_envp);
-        perror("execve");
+        printf("execve\n");
+        // execve("/usr/bin/strace", exec_argv, exec_envp);
+        // perror("execve");
         exit(1);
     }
     else // Parent process
