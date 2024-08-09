@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
         printf("execve\n%s\n%s", exec_argv[0], exec_envp[0]);
         // execve("/usr/bin/strace", exec_argv, exec_envp);
         // perror("execve");
-        exit(1);
+        // exit(1);
     }
     else // Parent process
     {
