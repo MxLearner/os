@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
         close(pipefd[1]); // Close the duplicated file descriptor
-        printf("execve\n");
+        printf("execve\n%s\n%s", exec_argv[0], exec_envp[0]);
         // execve("/usr/bin/strace", exec_argv, exec_envp);
         // perror("execve");
         exit(1);
