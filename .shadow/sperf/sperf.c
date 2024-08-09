@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
             perror("open /dev/null");
             exit(1);
         }
-        // dup2(dev_null_fd, 1); // Redirect stdout to /dev/null
+        dup2(dev_null_fd, 1); // Redirect stdout to /dev/null
 
         // Redirect standard error to pipe
         // int n = dup2(pipefd[1], 1);
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         //     exit(1);
         // }
         close(pipefd[1]); // Close the duplicated file descriptor
-        printf("execve\n%s\n%s", exec_argv[0], exec_envp[0]);
+        fprintf(stderr, "execve\n%s\n%s", exec_argv[0], exec_envp[0]);
         // execve("/usr/bin/strace", exec_argv, exec_envp);
         // perror("execve");
         // exit(1);
