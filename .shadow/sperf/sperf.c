@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
             perror("dup2");
             exit(1);
         }
-        close(pipefd[1]); // Close the duplicated file descriptor
+        // close(pipefd[1]); // Close the duplicated file descriptor
         fprintf(stderr, "execve\n%s\n%s\n", exec_argv[0], exec_envp[0]);
         // execve("/usr/bin/strace", exec_argv, exec_envp);
         // perror("execve");
