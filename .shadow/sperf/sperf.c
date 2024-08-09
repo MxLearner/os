@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
             perror("open /dev/null");
             exit(1);
         }
-        dup2(dev_null_fd, 1); // Redirect stdout to /dev/null
+        // dup2(dev_null_fd, 1); // Redirect stdout to /dev/null
 
         // Redirect standard error to pipe
         // int n = dup2(pipefd[1], 1);
