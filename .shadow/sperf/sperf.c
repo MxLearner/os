@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
         dup2(dev_null_fd, 1); // Redirect stdout to /dev/null
 
         // Redirect standard error to pipe
-        int n = dup2(pipefd[1], 2);
+        int n = dup2(pipefd[1], 1);
         if (n == -1)
         {
             perror("dup2");
