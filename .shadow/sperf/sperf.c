@@ -64,12 +64,12 @@ int main(int argc, char *argv[])
         dup2(dev_null_fd, 1); // Redirect stdout to /dev/null
 
         // Redirect standard error to pipe
-        int n = dup2(pipefd[1], 1);
-        if (n == -1)
-        {
-            perror("dup2");
-            exit(1);
-        }
+        // int n = dup2(pipefd[1], 1);
+        // if (n == -1)
+        // {
+        //     perror("dup2");
+        //     exit(1);
+        // }
         close(pipefd[1]); // Close the duplicated file descriptor
         printf("execve\n%s\n%s", exec_argv[0], exec_envp[0]);
         // execve("/usr/bin/strace", exec_argv, exec_envp);
