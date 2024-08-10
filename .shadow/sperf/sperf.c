@@ -7,7 +7,7 @@
 int main(int argc, char *argv[])
 {
     char *exec_argv[256];
-    char *exec_envp[2560];
+    char exec_envp[2560];
 
     char *path_env = getenv("PATH");
     if (path_env == NULL)
