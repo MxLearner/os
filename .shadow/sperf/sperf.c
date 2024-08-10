@@ -7,7 +7,7 @@
 int main(int argc, char *argv[])
 {
     char *exec_argv[256];
-    char *exec_envp[256];
+    char *exec_envp[2560];
 
     char *path_env = getenv("PATH");
     if (path_env == NULL)
@@ -15,8 +15,7 @@ int main(int argc, char *argv[])
         perror("getenv");
         exit(1);
     }
-    char path_str[1024];
-    snprintf(path_str, sizeof(path_str), "PATH=%s", path_env);
+    snprintf(exec_envp, sizeof(exec_envp), "PATH=%s", path_env);
 
     exec_argv[0] = "strace";
 
@@ -56,8 +55,6 @@ int main(int argc, char *argv[])
         close(pipe_fds[1]);
 
         execve("strace", exec_argv, exec_envp);
-        // 执行ls命令
-        // execlp("ls", "ls", (char *)NULL);
 
         // 如果execlp返回，说明执行失败
         perror("execlp");
