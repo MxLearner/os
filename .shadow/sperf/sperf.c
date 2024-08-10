@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
         syscall_info calls[MAX_CALLS];
         int num_calls = 0;
         regex_t regex;
-        regmatch_t match[3];
+        regmatch_t matches[3];
         char *pattern = "\\b(\\w+)\\b.*<([0-9.]+)>";
         regcomp(&regex, pattern, REG_EXTENDED);
 
