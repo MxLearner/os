@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         while ((nbytes = read(pipe_fds[0], buffer, sizeof(buffer) - 1)) > 0)
         {
             buffer[nbytes] = '\0';
-            printf("hhh\n%s", buffer);
+            printf("%s", buffer);
         }
 
         // 关闭管道的读端
