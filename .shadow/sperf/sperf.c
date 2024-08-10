@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
         exec_argv[i] = argv[i];
     }
     exec_argv[argc] = NULL;
-    exec_envp[0] = "PATH=/bin";
+    exec_envp[0] = path_str;
     exec_envp[1] = NULL;
 
     int pipe_fds[2];
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
         // 关闭原始的写端描述符
         close(pipe_fds[1]);
 
-        execve("strace", exec_argv, exec_envp);
+        execve("/usr/bin/strace", exec_argv, exec_envp);
 
         perror("execve");
         exit(EXIT_FAILURE);
