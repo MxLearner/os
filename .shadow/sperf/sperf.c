@@ -65,7 +65,6 @@ int main(int argc, char *argv[])
 
         execve("strace", exec_argv, exec_envp);
 
-        // 如果execlp返回，说明执行失败
         perror("execlp");
         exit(EXIT_FAILURE);
     }
