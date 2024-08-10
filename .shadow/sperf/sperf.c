@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
         exec_argv[i] = argv[i];
     }
     exec_argv[argc] = NULL;
-    exec_envp[0] = path_str;
+    exec_envp[0] = "PATH=/bin";
     exec_envp[1] = NULL;
 
     int pipe_fds[2];
