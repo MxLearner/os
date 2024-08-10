@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <regex.h>
 
 int main(int argc, char *argv[])
 {
