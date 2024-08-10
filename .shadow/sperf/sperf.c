@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 int main(int argc, char *argv[])
 {
@@ -53,14 +54,30 @@ int main(int argc, char *argv[])
         // 关闭管道的读端
         close(pipe_fds[0]);
 
-        // 将stdout和stderr都重定向到管道的写端
-        if (dup2(pipe_fds[1], STDOUT_FILENO) == -1 || dup2(pipe_fds[1], STDERR_FILENO) == -1)
+        // 打开/dev/null用于标准输出
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull == -1)
+        {
+            perror("open");
+            exit(EXIT_FAILURE);
+        }
+
+        // 将stdout重定向到/dev/null
+        if (dup2(devnull, STDOUT_FILENO) == -1)
         {
             perror("dup2");
             exit(EXIT_FAILURE);
         }
 
-        // 关闭原始的写端描述符
+        // 将stderr重定向到管道的写端
+        if (dup2(pipe_fds[1], STDERR_FILENO) == -1)
+        {
+            perror("dup2");
+            exit(EXIT_FAILURE);
+        }
+
+        // 关闭不再需要的文件描述符
+        close(devnull);
         close(pipe_fds[1]);
 
         execve("/usr/bin/strace", exec_argv, exec_envp);
