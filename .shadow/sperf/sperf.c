@@ -1,18 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <string.h>
 #include <sys/wait.h>
-#include <sys/types.h>
-#include <assert.h>
-#include <signal.h>
-#include <sys/time.h>
-#include <fcntl.h> // Required for open()
 
 int main(int argc, char *argv[])
 {
-    signal(SIGPIPE, SIG_IGN);
-
     char *exec_argv[256];
     char *exec_envp[256];
 
@@ -22,71 +15,76 @@ int main(int argc, char *argv[])
         perror("getenv");
         exit(1);
     }
-    char path_str[10240];
+    char path_str[1024];
     snprintf(path_str, sizeof(path_str), "PATH=%s", path_env);
 
     exec_argv[0] = "strace";
 
-    for (int i = 1; i < argc; i++)
-    {
-        exec_argv[i] = argv[i];
-    }
-    exec_argv[argc] = NULL;
-    exec_envp[0] = path_str;
-    exec_envp[1] = NULL;
+    int pipe_fds[2];
+    pid_t pid;
 
-    pid_t pid = fork();
-    int pipefd[2];
-    char buffer[1024];
-    if (pipe(pipefd) == -1)
+    // 创建管道
+    if (pipe(pipe_fds) == -1)
     {
         perror("pipe");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
+    // 创建子进程
+    pid = fork();
     if (pid == -1)
     {
         perror("fork");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
-    if (pid == 0) // Child process
+    if (pid == 0)
     {
-        close(pipefd[0]); // Close read end
+        // 子进程
 
-        // Redirect standard output to /dev/null
-        int dev_null_fd = open("/dev/null", O_WRONLY);
-        if (dev_null_fd == -1)
-        {
-            perror("open /dev/null");
-            exit(1);
-        }
-        dup2(dev_null_fd, 1); // Redirect stdout to /dev/null
+        // 关闭管道的读端
+        close(pipe_fds[0]);
 
-        // Redirect standard error to pipe
-        int n = dup2(pipefd[1], 2);
-        if (n == -1)
+        // 将stdout和stderr都重定向到管道的写端
+        if (dup2(pipe_fds[1], STDOUT_FILENO) == -1 || dup2(pipe_fds[1], STDERR_FILENO) == -1)
         {
             perror("dup2");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
-        // close(pipefd[1]); // Close the duplicated file descriptor
-        fprintf(stderr, "execve\n%s\n%s\n", exec_argv[0], exec_envp[0]);
-        // execve("/usr/bin/strace", exec_argv, exec_envp);
-        // perror("execve");
-        // exit(1);
+
+        // 关闭原始的写端描述符
+        close(pipe_fds[1]);
+
+        // 执行ls命令
+        execlp("ls", "ls", (char *)NULL);
+
+        // 如果execlp返回，说明执行失败
+        perror("execlp");
+        exit(EXIT_FAILURE);
     }
-    else // Parent process
+    else
     {
-        // wait(NULL);       // Ensure child process resources are reclaimed
-        close(pipefd[1]); // Close write end
+        // 父进程
 
-        while (read(pipefd[0], buffer, sizeof(buffer)) > 0)
+        // 关闭管道的写端
+        close(pipe_fds[1]);
+
+        // 从管道读取数据
+        char buffer[1024];
+        int nbytes;
+        while ((nbytes = read(pipe_fds[0], buffer, sizeof(buffer) - 1)) > 0)
         {
-            write(STDOUT_FILENO, buffer, sizeof(buffer));
+            buffer[nbytes] = '\0';
+            printf("hhh\n%s", buffer);
         }
-        wait(NULL); // Ensure child process resources are reclaimed
-    }
 
-    return 0;
+        // 关闭管道的读端
+        close(pipe_fds[0]);
+
+        // 等待子进程结束
+        wait(NULL);
+
+        // 父进程退出
+        exit(EXIT_SUCCESS);
+    }
 }
