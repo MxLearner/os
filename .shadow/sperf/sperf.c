@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     for (int i = 1; i < argc; i++)
     {
-        exec_argv[i] = argv[i];
+        exec_argv[i + 3] = argv[i];
     }
     exec_argv[argc] = NULL;
     exec_envp[0] = path_str;
