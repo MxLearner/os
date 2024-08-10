@@ -20,6 +20,9 @@ int main(int argc, char *argv[])
     snprintf(path_str, sizeof(path_str), "PATH=%s", path_env);
 
     exec_argv[0] = "strace";
+    exec_argv[1] = "-T";        // 获取每个系统调用的执行时间
+    exec_argv[2] = "-o";        // 指定strace的输出文件，用于追踪程序的输出
+    exec_argv[3] = "/dev/null"; // 将被追踪程序的输出重定向到/dev/null
 
     for (int i = 1; i < argc; i++)
     {
