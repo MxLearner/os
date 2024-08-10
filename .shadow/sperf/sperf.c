@@ -7,6 +7,7 @@
 int main(int argc, char *argv[])
 {
     char *exec_argv[256];
+    char *exec_envp[256];
 
     char *path_env = getenv("PATH");
     if (path_env == NULL)
@@ -18,6 +19,14 @@ int main(int argc, char *argv[])
     snprintf(path_str, sizeof(path_str), "PATH=%s", path_env);
 
     exec_argv[0] = "strace";
+
+    for (int i = 1; i < argc; i++)
+    {
+        exec_argv[i] = argv[i];
+    }
+    exec_argv[argc] = NULL;
+    exec_envp[0] = path_str;
+    exec_envp[1] = NULL;
 
     int pipe_fds[2];
     pid_t pid;
@@ -54,7 +63,7 @@ int main(int argc, char *argv[])
         // 关闭原始的写端描述符
         close(pipe_fds[1]);
 
-        execve("strace", exec_argv, path_str);
+        execve("strace", exec_argv, exec_envp);
 
         // 如果execlp返回，说明执行失败
         perror("execlp");
