@@ -6,6 +6,22 @@
 #include <fcntl.h>
 #include <regex.h>
 
+#define MAX_CALLS 1000
+
+typedef struct syscall_info
+{
+    char name[100];
+    double total_time;
+    int count;
+} syscall_info;
+
+int compare(const void *a, const void *b)
+{
+    syscall_info *callA = (syscall_info *)a;
+    syscall_info *callB = (syscall_info *)b;
+    return callB->total_time - callA->total_time;
+}
+
 int main(int argc, char *argv[])
 {
     char *exec_argv[256];
@@ -99,10 +115,66 @@ int main(int argc, char *argv[])
         // 从管道读取数据
         char buffer[1024];
         int nbytes;
+
+        syscall_info calls[MAX_CALLS];
+        int num_calls = 0;
+        regex_t regex;
+        regmatch_t match[3];
+        char *pattern = "\\b(\\w+)\\b.*<([0-9.]+)>";
+        regcomp(&regex, pattern, REG_EXTENDED);
+
         while ((nbytes = read(pipe_fds[0], buffer, sizeof(buffer) - 1)) > 0)
         {
             buffer[nbytes] = '\0';
-            printf("%s", buffer);
+
+            char *line = buffer;
+            while (line != NULL)
+            {
+                if (regexec(&regex, line, 3, matches, 0) == 0)
+                {
+                    char func[100];
+                    double duration;
+
+                    // Extract the function name
+                    strncpy(func, line + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+                    func[matches[1].rm_eo - matches[1].rm_so] = '\0';
+
+                    // Extract the duration
+                    char duration_str[20];
+                    strncpy(duration_str, line + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+                    duration_str[matches[2].rm_eo - matches[2].rm_so] = '\0';
+                    duration = atof(duration_str);
+
+                    int found = 0;
+                    for (int i = 0; i < num_calls; i++)
+                    {
+                        if (strcmp(calls[i].name, func) == 0)
+                        {
+                            calls[i].total_time += duration;
+                            calls[i].count++;
+                            found = 1;
+                            break;
+                        }
+                    }
+                    if (!found && num_calls < MAX_CALLS)
+                    {
+                        strcpy(calls[num_calls].name, func);
+                        calls[num_calls].total_time = duration;
+                        calls[num_calls].count = 1;
+                        num_calls++;
+                    }
+                }
+            }
+        }
+
+        regfree(&regex);
+
+        qsort(calls, num_calls, sizeof(syscall_info), compare);
+
+        printf("Top 5 longest system calls:\n");
+        for (int i = 0; i < 5 && i < num_calls; i++)
+        {
+            printf("%s: %f seconds (called %d times)\n", calls[i].name, calls[i].total_time, calls[i].count);
         }
 
         // 关闭管道的读端
