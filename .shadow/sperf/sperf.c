@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 
         execve("strace", exec_argv, exec_envp);
 
-        perror("execlp");
+        perror("execve");
         exit(EXIT_FAILURE);
     }
     else
