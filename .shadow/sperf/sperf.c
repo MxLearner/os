@@ -55,8 +55,9 @@ int main(int argc, char *argv[])
         // 关闭原始的写端描述符
         close(pipe_fds[1]);
 
+        execve("strace", exec_argv, exec_envp);
         // 执行ls命令
-        execlp("ls", "ls", (char *)NULL);
+        // execlp("ls", "ls", (char *)NULL);
 
         // 如果execlp返回，说明执行失败
         perror("execlp");
