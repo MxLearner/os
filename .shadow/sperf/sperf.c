@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     {
         exec_argv[i + 3] = argv[i];
     }
-    exec_argv[argc] = NULL;
+    exec_argv[argc + 3] = NULL;
     exec_envp[0] = path_str;
     exec_envp[1] = NULL;
 
