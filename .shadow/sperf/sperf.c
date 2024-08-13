@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
         int num_calls = 0;
         regex_t regex;
         regmatch_t matches[3];
-        char *pattern = "\\b(\\w+)\\b.*<([0-9.]+)>";
+        char *pattern = "^(\\w+)\\(.*<([0-9.]+)>$";
         regcomp(&regex, pattern, REG_EXTENDED);
 
         while ((nbytes = read(pipe_fds[0], buffer, sizeof(buffer) - 1)) > 0)
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
             buffer[nbytes] = '\0';
 
             char *line = buffer;
-            while (line != NULL)
+            if (line != NULL)
             {
                 if (regexec(&regex, line, 3, matches, 0) == 0)
                 {
