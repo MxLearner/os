@@ -107,6 +107,7 @@ int main(int argc, char *argv[])
     }
     else
     {
+        wait(NULL);
         // 父进程
 
         // 关闭管道的写端
@@ -171,7 +172,6 @@ int main(int argc, char *argv[])
         close(pipe_fds[0]);
 
         // 等待子进程结束
-        wait(NULL);
 
         // 父进程退出
         exit(EXIT_SUCCESS);
