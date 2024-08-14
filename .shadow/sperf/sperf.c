@@ -118,56 +118,46 @@ int main(int argc, char *argv[])
 
         syscall_info calls[MAX_CALLS];
         int num_calls = 0;
-        regex_t regex;
-        regmatch_t matches[3];
-        char *pattern = "^(\\w+)\\(.*<([0-9.]+)>$";
-        regcomp(&regex, pattern, REG_EXTENDED);
-
+        char *line, *contest;
         while ((nbytes = read(pipe_fds[0], buffer, sizeof(buffer) - 1)) > 0)
         {
             buffer[nbytes] = '\0';
-
-            char *line = buffer;
-            if (line != NULL)
+            line = strtok_r(buffer, "\n", &contest);
+            while (line != NULL)
             {
-                if (regexec(&regex, line, 3, matches, 0) == 0)
+                char *end_time = strrchr(line, '<');
+                if (end_time)
                 {
-                    char func[100];
-                    double duration;
-
-                    // Extract the function name
-                    strncpy(func, line + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
-                    func[matches[1].rm_eo - matches[1].rm_so] = '\0';
-
-                    // Extract the duration
-                    char duration_str[20];
-                    strncpy(duration_str, line + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
-                    duration_str[matches[2].rm_eo - matches[2].rm_so] = '\0';
-                    duration = atof(duration_str);
-
-                    int found = 0;
-                    for (int i = 0; i < num_calls; i++)
+                    *end_time = '\0';
+                    double time_taken = atof(end_time + 1);
+                    char *syscall_name = line;
+                    char *space_pos = strchr(syscall_name, '(');
+                    if (space_pos)
                     {
-                        if (strcmp(calls[i].name, func) == 0)
+                        *space_pos = '\0';
+                        int found = 0;
+                        for (int i = 0; i < num_calls; i++)
                         {
-                            calls[i].total_time += duration;
-                            calls[i].count++;
-                            found = 1;
-                            break;
+                            if (strcmp(calls[i].name, syscall_name) == 0)
+                            {
+                                calls[i].total_time += time_taken;
+                                calls[i].count++;
+                                found = 1;
+                                break;
+                            }
+                        }
+                        if (!found && num_calls < MAX_CALLS)
+                        {
+                            strcpy(calls[num_calls].name, syscall_name);
+                            calls[num_calls].total_time = time_taken;
+                            calls[num_calls].count = 1;
+                            num_calls++;
                         }
                     }
-                    if (!found && num_calls < MAX_CALLS)
-                    {
-                        strcpy(calls[num_calls].name, func);
-                        calls[num_calls].total_time = duration;
-                        calls[num_calls].count = 1;
-                        num_calls++;
-                    }
                 }
+                line = strtok_r(NULL, "\n", &contest);
             }
         }
-
-        regfree(&regex);
 
         qsort(calls, num_calls, sizeof(syscall_info), compare);
 
