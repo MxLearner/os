@@ -1,78 +1,127 @@
 #include <common.h>
-
-enum ops
-{
-    OP_ALLOC = 1,
-    OP_FREE
-};
-
-struct malloc_op
-{
-    enum ops type;
-    union
-    {
-        size_t sz;  // OP_ALLOC: size
-        void *addr; // OP_FREE: address
-    };
-};
-
-struct malloc_op random_op()
-{
-    struct malloc_op op;
-    if (rand() % 2)
-    {
-        op.type = OP_ALLOC;
-        op.sz = (rand() % 512 + 512) % 512;
-    }
-    else
-    {
-        op.type = OP_FREE;
-        op.addr = (void *)1;
-    }
-    return op;
-}
-
-void stress_test()
-{
-
-    for (int i = 0; i < 2; i++)
-    {
-        struct malloc_op op = random_op();
-
-        switch (op.type)
-        {
-        case OP_ALLOC:
-        {
-            printf("cpu_current:%d,alloc(%d)\n", cpu_current(), op.sz);
-            // void *ptr = pmm->alloc(op.sz);
-            //  alloc_check(ptr, op.sz);
-            break;
-        }
-        case OP_FREE:
-            printf("cpu_current:%d,free(%p)\n", cpu_current(), op.addr);
-            // free(op.addr);
-            break;
-        }
-    }
-}
-
 static void os_init()
 {
-    pmm->init();
+	pmm->init();
 }
+// #define TEST
+#ifdef TEST
+static void os_run_test3()//大内存
+{
+	void *add;
+	add=pmm->alloc(64*4096);
+	if (add== NULL)
+	{
+		printf("add is NULL");
+		halt(1);
+	}
+	else
+		printf("add: %x\n", add);
+	for (size_t i = 0; i <100000000; i++)
+	{
+		;
+	}
+	pmm->free(add);
+}
+static void os_run_test1()
+{
+	void *add1[100];
+	void *add2[100];
+	for (size_t i = 0; i < 100; i++)
+	{
+		add1[i] = pmm->alloc(24);
+		if (add1[i] == NULL)
+		{
+			printf("add is NULL");
+			halt(1);
+		}
+		else
+			printf("add1[%d]: %x\n",i, add1[i]);
+		int *add1_int=(int *)add1[i];
+		*add1_int=9876;
+		*(add1_int+(24-4)/4)=114514;
+		add2[i] = pmm->alloc(64);
+		if (add2[i] == NULL)
+		{
+			printf("add2[%d] is NULL",i);
+			halt(1);
+		}
+		else
+			printf("add2[%d]: %x\n",i, add2[i]);
+	}
+	for (size_t i = 0; i < 100; i++)
+	{
+		int *add1_int=(int *)add1[i];
+		assert(*add1_int=9876);
+		assert(*(add1_int+(24-4)/4)=114514);
+		pmm->free(add1[i]);
+		pmm->free(add2[i]);
+	}
+}
+static void os_run_test2()
+{
+	void *add1 = pmm->alloc(1020);
+	if (add1 == NULL)
+	{
+		printf("add is NULL");
+		halt(1);
+	}
+	else
+		printf("add1: %x\n", add1);
 
+	int *add1_int=(int *)add1;
+	*add1_int=9876;
+	*(add1_int+(1020-4)/4)=114514;
+	void *add2 = pmm->alloc(510);
+	if (add2 == NULL)
+	{
+		printf("add3 is NULL");
+		halt(1);
+	}
+	else
+		printf("add2: %x\n", add2);
+
+	void *add3 = pmm->alloc(800);
+	if (add3 == NULL)
+	{
+		printf("add3 is NULL");
+		halt(1);
+	}
+	else
+		printf("add3: %x\n", add3);
+	int *add3_int=(int *)add3;
+	*add3_int=543210;
+	*(add3_int+(800-4)/4)=114514;
+	pmm->free(add2);
+	assert(*add1_int==9876);
+	assert(*(add1_int+(1020-4)/4)==114514);
+	assert(*add3_int==543210);
+	assert(*(add3_int+(800-4)/4)==114514);
+	pmm->free(add1);
+	assert(*add3_int==543210);
+	assert(*(add3_int+(800-4)/4)==114514);
+	pmm->free(add3);
+}
+#endif
 static void os_run()
 {
-    // for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
-    //     putch(*s == '*' ? '0' + cpu_current() : *s);
-    // }
-    printf("cup_count: %d\n", cpu_count());
-    stress_test();
-    while (1)
-        ;
+	for (const char *s = "Hello World from CPU #*\n"; *s; s++)
+	{
+		putch(*s == '*' ? '0' + cpu_current() : *s);
+	}
+#ifdef TEST
+	os_run_test1();
+	os_run_test2();
+	os_run_test3();
+#endif
+	printf("%x\n",pmm->alloc(5368));
+	printf("%x\n",pmm->alloc(4096));
+	printf("%x\n",pmm->alloc(5368));
+	printf("%x\n",pmm->alloc(4));
+
+	while(true);
 }
 
 MODULE_DEF(os) = {
-    .init = os_init,
-    .run = os_run,
+	.init = os_init,
+	.run = os_run,
 };
