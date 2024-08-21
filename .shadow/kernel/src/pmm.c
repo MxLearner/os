@@ -81,6 +81,7 @@ static void *kalloc(size_t size)
                 current->next = new_free_node;
             }
             current->size = (uintptr_t)ptr - (uintptr_t)current - sizeof(free_node);
+            printf("current->size: %d\n", current->size);
             ret = ptr;
             break;
         }
