@@ -11,11 +11,14 @@ static void os_run()
     {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
-    size_t size = rand() % 5 * 1024;
-    void *ptr = pmm->alloc(size);
-    printf("kalloc: %p\n", ptr);
-    pmm->free(ptr);
-    printf("kfree: %p\n", ptr);
+    for (int i = 0; i < 10; i++)
+    {
+        size_t size = rand() % 5 * 1024;
+        void *ptr = pmm->alloc(size);
+        printf("kalloc: %p\n", ptr);
+        pmm->free(ptr);
+        printf("kfree: %p\n", ptr);
+    }
     while (1)
         ;
 }
