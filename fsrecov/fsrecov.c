@@ -1,186 +1,630 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
-#include <assert.h>
+#include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include <ctype.h>
-#include <stdbool.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <assert.h>
 #include <fcntl.h>
-#include <sys/mman.h>
 #include <unistd.h>
+#include <stdbool.h>
+#include <sys/mman.h>
+// #include <locale.h>
 
-#define getbit(x, pos) ((x) >> (pos) & 1)
-char filename[64];
-char long_name_buf[64];
-char sha[] = "d60e7d3d2b47d19418af5b0ba52406b86ec6ef83";
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
 
-int long_name_lenth = 0;
-struct fat_header
+typedef struct fat32hdr Fat32Hdr;
+typedef struct BITMAPFILEHEADER BMFileHdr;
+typedef struct BITMAPINFOHEADER BMInfoHdr;
+typedef struct fat32dent Fat32Dent;
+typedef struct longentry LFN_ENTRY;
+typedef enum cluster_type Clu_Type;
+typedef struct dir_node Dir_Node;
+
+// Copied from the manual
+struct fat32hdr
 {
-    uint8_t BS_jmpBoot[3];
-    uint8_t BS_OEMName[8];
-    uint16_t BPB_BytsPerSec; // 每扇区字节数
-    uint8_t BPB_SecPerClus;  // 每簇扇区数
-    uint16_t BPB_RsvdSecCnt; // 保留扇区数
-    uint8_t BPB_NumFATs;     // fat表个数
-    uint16_t BPB_RootEntCnt; // in FAT32 must be 0
-    uint16_t BPB_TotSec16;   // int FAT32 must be 0
-    uint8_t BPB_Media;
-    uint16_t BPB_FATSz16; // 0
-    uint16_t BPB_SecPerTrk;
-    uint16_t BPB_NumHeads;
-    uint32_t BPB_HiddSec;
-    uint32_t BPB_TotSec32;
-    uint32_t BPB_FATSz32; // FAT表扇区数
-    uint16_t BPB_ExtFlags;
-    uint16_t BPB_FSVer;
-    uint32_t BPB_RootClus; // FAT根目录起始簇号
-    uint16_t BPB_FSInfo;
-    uint16_t BPB_BkBootSec;
-    uint8_t BPB_Reserved[12];
-    uint8_t BS_DrvNum;
-    uint8_t BS_Reserved1;
-    uint8_t BS_BootSig;
-    uint32_t BS_VollD;
-    uint8_t BS_VolLab[11];
-    uint8_t BS_FilSysType[8];
-    uint8_t padding[420];
-    uint16_t Signature_word;
+    u8 BS_jmpBoot[3];
+    u8 BS_OEMName[8];
+    u16 BPB_BytsPerSec;
+    u8 BPB_SecPerClus;
+    u16 BPB_RsvdSecCnt;
+    u8 BPB_NumFATs;
+    u16 BPB_RootEntCnt;
+    u16 BPB_TotSec16;
+    u8 BPB_Media;
+    u16 BPB_FATSz16;
+    u16 BPB_SecPerTrk;
+    u16 BPB_NumHeads;
+    u32 BPB_HiddSec;
+    u32 BPB_TotSec32;
+    u32 BPB_FATSz32;
+    u16 BPB_ExtFlags;
+    u16 BPB_FSVer;
+    u32 BPB_RootClus;
+    u16 BPB_FSInfo;
+    u16 BPB_BkBootSec;
+    u8 BPB_Reserved[12];
+    u8 BS_DrvNum;
+    u8 BS_Reserved1;
+    u8 BS_BootSig;
+    u32 BS_VolID;
+    u8 BS_VolLab[11];
+    u8 BS_FilSysType[8];
+    u8 __padding_1[420];
+    u16 Signature_word;
 } __attribute__((packed));
 
-struct fat_short_dir
+struct fat32dent
 {
-    uint8_t DIR_Name[11]; // 名字+后缀
-    uint8_t DIR_Attr;     // 属性字节
-    uint8_t DIR_NTRes;    // 系统保留
-    uint8_t DIR_CrtTimeTenth;
-    uint8_t DIR_CrtTime[2];
-    uint8_t DIR_CrtDate[2];
-    uint8_t DIR_LastAccDate[2];
-    uint16_t DIR_FstClusHI; // 文件起始簇号高16位
-    uint8_t DIR_WrtTime[2];
-    uint8_t DIR_WrtDate[2];
-    uint16_t DIR_FstClusLO; // 文件起始簇号低16位
-    uint32_t DIR_FileSize;  // 文件长度
+    u8 DIR_Name[11];
+    u8 DIR_Attr;
+    u8 DIR_NTRes;
+    u8 DIR_CrtTimeTenth;
+    u16 DIR_CrtTime;
+    u16 DIR_CrtDate;
+    u16 DIR_LastAccDate;
+    u16 DIR_FstClusHI;
+    u16 DIR_WrtTime;
+    u16 DIR_WrtDate;
+    u16 DIR_FstClusLO;
+    u32 DIR_FileSize;
 } __attribute__((packed));
 
-struct fat_long_dir
+struct longentry
 {
-    uint8_t LDIR_Ord; // 属性字节
-    uint16_t LDIR_Name1[5];
-    uint8_t LDIR_Attr; // 目录项标志,0FH
-    uint8_t LDIR_Type; // 系统保留
-    uint8_t LDIR_Chksum;
-    uint16_t LDIR_Name2[6];
-    uint8_t LDIR_FstClusLO[2]; // 0
-    uint16_t LDIR_Name3[2];
+    u8 ord;
+    u16 name1[5];
+    u8 attr;
+    u8 type;
+    u8 chksum;
+    u16 name2[6];
+    u16 first_cluster;
+    u16 name3[2];
 } __attribute__((packed));
 
-struct DIR
+struct dir_node
 {
-    uint8_t data[32];
+    u32 clu_num;
+    Dir_Node *nxt;
+};
+
+struct BITMAPFILEHEADER
+{
+    u16 type;      // Magic identifier, must be 'BM'
+    u32 size;      // File size in bytes
+    u16 reserved1; // Not used
+    u16 reserved2; // Not used
+    u32 offset;    // Offset to image data in bytes from beginning of file
 } __attribute__((packed));
 
-void recover()
+struct BITMAPINFOHEADER
 {
-    int fd = open(filename, O_RDONLY);
-    assert(fd != -1);
-    struct stat buf;
-    fstat(fd, &buf);
-    void *fat_fs = mmap(NULL, buf.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    assert(fat_fs != MAP_FAILED);
-    struct fat_header *header = fat_fs;
-    assert(header->Signature_word == 0xaa55);
-    void *data_begin = (void *)(intptr_t)((header->BPB_RsvdSecCnt + header->BPB_NumFATs * header->BPB_FATSz32 + (header->BPB_RootClus - 2) * header->BPB_SecPerClus) * header->BPB_BytsPerSec);
-    printf("start:%p,data_begin:%p,size:%ld\n", fat_fs, data_begin, buf.st_size);
-    struct DIR *dir = (void *)((intptr_t)fat_fs + (intptr_t)data_begin);
-    while ((uintptr_t)dir++ < (uintptr_t)(fat_fs + buf.st_size))
-    {
-        if (dir->data[0] == 0x00 || dir->data[0] == 0xE5 || dir->data[11] == 0x0F)
-        {
-            continue;
-        }
-        if (dir->data[8] == 'B' && dir->data[9] == 'M' && dir->data[10] == 'P')
-        {
-            if (dir->data[6] == '~')
-            { // 是长文件的短文件名目录,需要倒推
-                memset(long_name_buf, 0, sizeof(long_name_buf));
-                long_name_lenth = 0;
-                struct fat_long_dir *long_dir = (struct fat_long_dir *)(dir - 1);
-                while (long_dir->LDIR_Attr == 0x0F)
-                {
-                    bool reach_end = false;
-                    for (int i = 0; i < 5; i++)
-                    {
-                        if (long_dir->LDIR_Name1[i] == 0x00)
-                        {
-                            reach_end = true;
-                            break;
-                        }
-                        long_name_buf[long_name_lenth++] = long_dir->LDIR_Name1[i];
-                    }
-                    if (!reach_end)
-                    {
-                        for (int i = 0; i < 6; i++)
-                        {
-                            if (long_dir->LDIR_Name2[i] == 0xFFFF)
-                            {
-                                reach_end = true;
-                                break;
-                            }
-                            long_name_buf[long_name_lenth++] = long_dir->LDIR_Name2[i];
-                        }
-                    }
-                    if (!reach_end)
-                    {
-                        for (int i = 0; i < 2; i++)
-                        {
-                            if (long_dir->LDIR_Name3[i] == 0xFFFF)
-                            {
-                                reach_end = true;
-                                break;
-                            }
-                            long_name_buf[long_name_lenth++] = long_dir->LDIR_Name3[i];
-                        }
-                    }
-                    if (getbit(long_dir->LDIR_Ord, 6) == 1)
-                    { // 长文件名的最后一个目录项
-                        printf("%s %s\n", sha, long_name_buf);
-                        break;
-                    }
-                    if (strlen(long_name_buf) > 40)
-                    {
-                        break;
-                    }
-                    long_dir--;
-                }
-            }
-            else
-            {
-                char *short_name = malloc(16);
-                memset(short_name, 0, 16);
-                for (int i = 0; i < 8; i++)
-                {
-                    if (dir->data[i] == 0x20)
-                        break;
-                    short_name[i] = dir->data[i];
-                }
-                strcat(short_name, ".bmp");
-                printf("%s %s\n", sha, short_name);
-            }
-            fflush(stdout);
-        }
-    }
-    close(fd);
-}
+    u32 size;             // Header size in bytes
+    u32 width;            // Width of the image
+    u32 height;           // Height of the image
+    u16 planes;           // Number of color planes
+    u16 bits;             // Bits per pixel
+    u32 compression;      // Compression type
+    u32 imagesize;        // Image size in bytes
+    u32 xresolution;      // Pixels per meter
+    u32 yresolution;      // Pixels per meter
+    u32 ncolours;         // Number of colors
+    u32 importantcolours; // Important colors
+} __attribute__((packed));
+
+enum cluster_type
+{
+    DIR,
+    BMP_F,
+    BMP_I,
+    UNUSED
+};
+
+Fat32Hdr *hdr;
+Dir_Node *Dir_Begin;
+u32 clu_cnt = 0;
+
+void *map_disk(const char *fname);
+void *Cluster_to_Addr(u32 n);
+// u32 Addr_to_Cluster(void* addr);
+bool judge_if_dir(void *cluster);
+bool judge_if_unused(void *cluster);
+bool judge_if_bmp_hdr(void *cluster);
+Clu_Type decide_clu_type(void *cluster);
+void initialize_dir_begin();
+void insert_dir_node(u32 clu_num);
+void classify_the_cluster(u32 clu_cnt, Clu_Type *clu_table);
+void recover_the_dir(void *cluster, Clu_Type *clu_table);
+void get_long_fill_name(LFN_ENTRY *entry, u32 entry_cnt, char *file_name);
+bool get_pic_sha_num_and_print(u32 clu_num, Clu_Type *clu_table, char *file_name);
+bool store_pic_in_tmp(void *start, u32 fsize, char *file_name);
+char *build_file_name_with_tmp(char *file_name);
+bool calculate_sha1sum(char *file_name);
+void get_short_fill_name(Fat32Dent *entry, char *file_name);
+int recover_short_name_file(void *short_name_entry, Clu_Type *clu_table);
+int recover_long_name_file(void *long_name_entry, Clu_Type *clu_table, u32 remain_dir);
+void recovery(Clu_Type *clu_table);
 
 int main(int argc, char *argv[])
 {
-    sprintf(filename, "%s", argv[1]);
-    memset(long_name_buf, 0, sizeof(long_name_buf));
-    recover();
+    if (argc < 2)
+    {
+        fprintf(stderr, "Usage: %s fs-image\n", argv[0]);
+        exit(1);
+    }
+
+    setbuf(stdout, NULL);
+
+    assert(sizeof(struct fat32hdr) == 512); // defensive
+
+    // map disk image to memory
+    hdr = map_disk(argv[1]);
+    initialize_dir_begin();
+
+    u32 RootDirSectors = ((hdr->BPB_RootEntCnt * 32) + (hdr->BPB_BytsPerSec - 1)) / hdr->BPB_BytsPerSec;
+
+    u32 DataSec_cnt = hdr->BPB_TotSec32 - (hdr->BPB_RsvdSecCnt + (hdr->BPB_NumFATs * hdr->BPB_FATSz32) + RootDirSectors);
+    clu_cnt = DataSec_cnt / hdr->BPB_SecPerClus;
+    Clu_Type *clu_table = malloc(clu_cnt * sizeof(Clu_Type));
+
+    classify_the_cluster(clu_cnt, clu_table);
+
+    recovery(clu_table);
+    // file system traversal
+    munmap(hdr, hdr->BPB_TotSec32 * hdr->BPB_BytsPerSec);
+}
+
+void recover_the_dir(void *cluster, Clu_Type *clu_table)
+{
+    u32 clu_size = hdr->BPB_BytsPerSec * hdr->BPB_SecPerClus;
+    for (u32 i = 0; i < clu_size; i += 32)
+    {
+        Fat32Dent *entry = (Fat32Dent *)(cluster + i);
+        if (entry->DIR_Name[0] == 0x00)
+        {
+            break;
+        }
+        else if (entry->DIR_Name[0] == 0xE5)
+        {
+            continue;
+        }
+        else if (entry->DIR_Attr == 0x0F)
+        {
+            i += recover_long_name_file(entry, clu_table, (clu_size - i * 32));
+        }
+        else
+        {
+            i += recover_short_name_file(entry, clu_table);
+        }
+    }
+}
+
+void get_long_fill_name(LFN_ENTRY *entry, u32 entry_cnt, char *file_name)
+{
+    LFN_ENTRY *cur_dir = entry + entry_cnt - 1;
+    int i = 0;
+    int k = 0;
+    for (int j = entry_cnt - 1; j >= 0; j--)
+    {
+        // TODO: judge if valid
+        for (i = 0; i < 5; i++)
+            file_name[k++] = (char)cur_dir->name1[i];
+        for (i = 0; i < 6; i++)
+            file_name[k++] = (char)cur_dir->name2[i];
+        for (i = 0; i < 2; i++)
+            file_name[k++] = (char)cur_dir->name3[i];
+        cur_dir = cur_dir - 1;
+    }
+    file_name[k] = '\0';
+}
+
+bool store_pic_in_tmp(void *start, u32 fsize, char *file_name)
+{
+    FILE *file = fopen(file_name, "wb");
+    if (file == NULL)
+    {
+        perror("Failed to open file");
+        return false;
+    }
+
+    size_t written = fwrite(start, 1, fsize, file);
+    if (written != fsize)
+    {
+        perror("Failed to write data");
+    }
+
+    fclose(file);
+    return true;
+}
+
+char *build_file_name_with_tmp(char *file_name)
+{
+    char *file_name_head = malloc(sizeof(char) * 300);
+    strcpy(file_name_head, "/tmp/");
+    strcat(file_name_head, file_name);
+    return file_name_head;
+}
+
+bool calculate_sha1sum(char *file_name)
+{
+    char command[256];
+    snprintf(command, sizeof(command), "sha1sum %s", file_name);
+
+    FILE *pipe = popen(command, "r");
+    if (pipe == NULL)
+    {
+        perror("Failed to run command");
+        return false;
+    }
+
+    char buffer[43];
+    fgets(buffer, sizeof(buffer), pipe);
+    printf("%s", buffer);
+
+    pclose(pipe);
+    return true;
+}
+
+bool try_cluster(u32 clu_num, Clu_Type *clu_table, u32 offset, u32 line_size, u32 padding_size, void *last_line)
+{
+    //  return true;
+    if (clu_num >= clu_cnt || clu_num < 2)
+    {
+        return false;
+    }
+    void *cluster = Cluster_to_Addr(clu_num);
+    // if (clu_table[clu_num] != BMP_I) {
+    //   return false;
+    // }
+    // if (memcmp(cluster + offset - padding_size, "\0\0\0\0", padding_size) != 0) {
+    //   return false;
+    // }
+    // if (memcmp(cluster + offset + line_size, "\0\0\0\0", padding_size) != 0) {
+    //   return false;
+    // }
+    u8 *clu_ptr = cluster;
+    u8 *last_ptr = last_line;
+    u32 dev = 0;
+    for (u32 i = 0; i < line_size + padding_size; ++i)
+    {
+        u8 diff = *(clu_ptr++) - *(last_ptr++);
+        dev += diff * diff;
+    }
+    if (dev / (line_size + padding_size) > 220 * 220)
+    {
+        return false;
+    }
+    return true;
+}
+
+bool get_pic_sha_num_and_print(u32 clu_num, Clu_Type *clu_table, char *file_name)
+{
+    if (clu_num >= clu_cnt || clu_num < 2)
+    {
+        return false;
+    }
+    if (clu_table[clu_num] != BMP_F)
+    {
+        return false;
+    }
+    u32 clu_size = hdr->BPB_BytsPerSec * hdr->BPB_SecPerClus;
+    void *cluster = Cluster_to_Addr(clu_num);
+    BMFileHdr *bfhdr = cluster;
+    u32 fsize = bfhdr->size;
+    char *file_system_file_name = NULL;
+    file_system_file_name = build_file_name_with_tmp(file_name);
+
+    u32 num_clus = (fsize + clu_size - 1) / clu_size;
+    void *buf = malloc(clu_size * num_clus);
+    void *buf_ptr = buf;
+    void *data = buf;
+    memcpy(buf_ptr, cluster, clu_size);
+    buf_ptr += clu_size;
+    BMFileHdr *bf = buf;
+    BMInfoHdr *bi = buf + sizeof(BMFileHdr);
+
+    bool is_success = false;
+    do
+    {
+        //    if (true) {
+        //      data = cluster;
+        //      break;
+        //    }
+        if (bi->compression != 0)
+        {
+            data = cluster;
+            break;
+        }
+        u32 line_size = (bi->bits / 8) * bi->width;
+        u32 padding_size = (4 - (line_size % 4)) % 4;
+        if (padding_size == 0)
+        {
+            data = cluster;
+            //       printf("Hi, line 293\n");
+            break;
+        }
+        u32 padded_line_size = line_size + padding_size;
+        void *img = buf + bf->offset;
+        u32 last_clu_num = clu_num;
+        for (u32 i = 1; i < num_clus; ++i)
+        {
+            u32 offset = padded_line_size - (buf_ptr - img) % padded_line_size;
+            img = buf_ptr + offset;
+            if (last_clu_num + 1 < clu_cnt && try_cluster(last_clu_num + 1, clu_table, offset, line_size, padding_size, buf_ptr - padded_line_size))
+            {
+                memcpy(buf_ptr, Cluster_to_Addr(last_clu_num + 1), clu_size);
+                buf_ptr += clu_size;
+                clu_table[last_clu_num + 1] = -1;
+                ++last_clu_num;
+                continue;
+            }
+
+            // printf("Hi\n");
+
+            for (u32 j = 2; j < clu_cnt; ++j)
+            {
+                if (!try_cluster(j, clu_table, offset, line_size, padding_size, buf_ptr - padded_line_size))
+                {
+                    continue;
+                }
+                memcpy(buf_ptr, Cluster_to_Addr(j), clu_size);
+                buf_ptr += clu_size;
+                clu_table[j] = -1;
+                last_clu_num = j;
+                break;
+            }
+        }
+    } while (false);
+
+    is_success = store_pic_in_tmp(data, fsize, file_system_file_name);
+
+    free(buf);
+    if (!is_success)
+    {
+        return is_success;
+    }
+    is_success = calculate_sha1sum(file_system_file_name);
+    if (!is_success)
+    {
+        return is_success;
+    }
+    printf("%s\n", file_name);
+    return true;
+}
+
+void get_short_fill_name(Fat32Dent *entry, char *file_name)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        file_name[i] = (char)entry->DIR_Name[i];
+    }
+    file_name[8] = '.';
+    for (int i = 8; i < 11; i++)
+    {
+        file_name[i + 1] = (char)entry->DIR_Name[i];
+    }
+}
+
+int recover_short_name_file(void *short_name_entry, Clu_Type *clu_table)
+{
+    Fat32Dent *entry = short_name_entry;
+    char *file_name = malloc(sizeof(char) * 20);
+    get_short_fill_name(entry, file_name);
+    u32 pic_clu_num = (((u32)entry->DIR_FstClusHI) << 16) | entry->DIR_FstClusLO;
+    bool is_success = get_pic_sha_num_and_print(pic_clu_num, clu_table, file_name);
     return 0;
+}
+
+int recover_long_name_file(void *long_name_entry, Clu_Type *clu_table, u32 remain_dir)
+{
+    LFN_ENTRY *entry = long_name_entry;
+    char *file_name = malloc(sizeof(char) * 256);
+    if (entry->ord & 0x40)
+    {
+        u32 entry_cnt = entry->ord & 0x0f;
+        if (remain_dir < (entry_cnt + 1) * 32)
+        { // TODO: use the checksum to get the SFN
+            return remain_dir;
+        }
+        get_long_fill_name(entry, entry_cnt, file_name);
+        Fat32Dent *SFN = long_name_entry + 32 * entry_cnt;
+        u32 pic_clu_num = SFN->DIR_FstClusHI << 16 | SFN->DIR_FstClusLO;
+        bool is_success = get_pic_sha_num_and_print(pic_clu_num, clu_table, file_name);
+        if (is_success)
+        {
+            return entry_cnt * 32;
+        }
+    }
+    return 0;
+}
+
+void recovery(Clu_Type *clu_table)
+{
+    for (Dir_Node *i = Dir_Begin; i != NULL; i = i->nxt)
+    {
+        u32 clu_num = i->clu_num;
+        void *cluster = Cluster_to_Addr(clu_num);
+        recover_the_dir(cluster, clu_table);
+    }
+}
+
+void classify_the_cluster(u32 clu_cnt, Clu_Type *clu_table)
+{
+    for (u32 clu_num = 2; clu_num < clu_cnt; clu_num++)
+    {
+        void *cluster = Cluster_to_Addr(clu_num);
+        Clu_Type the_type = decide_clu_type(cluster);
+        clu_table[clu_num] = the_type;
+        if (the_type == DIR)
+        {
+            insert_dir_node(clu_num);
+        }
+    }
+}
+
+void initialize_dir_begin()
+{
+    Dir_Begin = NULL;
+}
+
+void insert_dir_node(u32 clu_num)
+{
+    Dir_Node *clu_node = malloc(sizeof(Dir_Node));
+    clu_node->clu_num = clu_num;
+    clu_node->nxt = Dir_Begin;
+    Dir_Begin = clu_node;
+}
+
+void process_the_cluster(void *cluster, Clu_Type clu_type)
+{
+    switch (clu_type)
+    {
+    case DIR:
+    {
+
+        break;
+    }
+    case BMP_F:
+    {
+        break;
+    }
+    case BMP_I:
+    case UNUSED:
+        break;
+    }
+}
+
+Clu_Type decide_clu_type(void *cluster)
+{
+    if (judge_if_bmp_hdr(cluster))
+    {
+        return BMP_F;
+    }
+    if (judge_if_unused(cluster))
+    {
+        return UNUSED;
+    }
+    if (judge_if_dir(cluster))
+    {
+
+        return DIR;
+    }
+    return BMP_I;
+}
+
+void *Cluster_to_Addr(u32 n)
+{
+    u8 *first_cluster = (u8 *)hdr + ((hdr->BPB_RsvdSecCnt + (hdr->BPB_SecPerClus - 1)) / hdr->BPB_SecPerClus) * hdr->BPB_SecPerClus * hdr->BPB_BytsPerSec + ((hdr->BPB_NumFATs * hdr->BPB_FATSz32 + (hdr->BPB_SecPerClus - 1)) / hdr->BPB_SecPerClus) * hdr->BPB_SecPerClus * hdr->BPB_BytsPerSec;
+
+    void *data_sec = (void *)(first_cluster + (n - 2) * hdr->BPB_SecPerClus * hdr->BPB_BytsPerSec);
+    return data_sec;
+}
+
+// u32 Addr_to_Cluster(void* addr) {
+//   u32 byte_offset = (u32) (addr - (void*) hdr);
+//   u32 data_sec = byte_offset / hdr->BPB_BytsPerSec;
+//   u32 n = (data_sec - hdr->BPB_RsvdSecCnt - hdr->BPB_NumFATs * hdr->BPB_FATSz32) / hdr->BPB_SecPerClus + 2;
+//   return n;
+// }
+
+bool judge_if_dir(void *cluster)
+{
+    size_t cluster_size = hdr->BPB_BytsPerSec * hdr->BPB_SecPerClus;
+    size_t bmp_cnt = 0;
+    for (int i = 0; i < cluster_size - 2; i++)
+    {
+        char *aim_str = cluster + i;
+        if (aim_str[0] != 'B' && aim_str[0] != 'b')
+        {
+            continue;
+        }
+        if ((aim_str[1] == 'M' && aim_str[2] == 'P') || (aim_str[1] == 'm' && aim_str[2] == 'p'))
+        {
+            bmp_cnt++;
+        }
+    }
+    if (bmp_cnt > 2)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool judge_if_unused(void *cluster)
+{
+    size_t cluster_size = hdr->BPB_BytsPerSec * hdr->BPB_SecPerClus;
+    uint16_t *judger = cluster;
+    for (int i = 0; i < 16; i++)
+    {
+        if (judger[i] != 0)
+        {
+            return false;
+        }
+    }
+    if (judger[cluster_size >> 2])
+    {
+        return false;
+    }
+    return true;
+}
+
+bool judge_if_bmp_hdr(void *cluster)
+{
+    BMFileHdr *file_hdr = cluster;
+    if (file_hdr->type != ('M' << 8 | 'B'))
+    {
+        return false;
+    }
+    if (file_hdr->reserved1 != 0 || file_hdr->reserved2 != 0)
+    {
+        return false;
+    }
+    BMInfoHdr *info_hdr = cluster + 14;
+    if (info_hdr->size != 40)
+    {
+        return false;
+    }
+    return true;
+}
+
+void *map_disk(const char *fname)
+{
+    int fd = open(fname, O_RDWR);
+
+    if (fd < 0)
+    {
+        perror(fname);
+        goto release;
+    }
+
+    off_t size = lseek(fd, 0, SEEK_END);
+    if (size == -1)
+    {
+        perror(fname);
+        goto release;
+    }
+
+    struct fat32hdr *hdr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    if (hdr == (void *)-1)
+    {
+        goto release;
+    }
+
+    close(fd);
+
+    if (hdr->Signature_word != 0xaa55 ||
+        hdr->BPB_TotSec32 * hdr->BPB_BytsPerSec != size)
+    {
+        fprintf(stderr, "%s: Not a FAT file image\n", fname);
+        goto release;
+    }
+    return hdr;
+
+release:
+    if (fd > 0)
+    {
+        close(fd);
+    }
+    exit(1);
 }
