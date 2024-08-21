@@ -88,15 +88,16 @@ static void *kalloc(size_t size)
         }
         current = current->next;
     }
-    // if (ret != NULL)
-    // {
-    //     occupied_node *new_occupied_node = NULL;
-    //     new_occupied_node->ptr = (uintptr_t)ret;
-    //     new_occupied_node->next = head_occupied->next;
-    //     new_occupied_node->prev = head_occupied;
-    //     head_occupied->next = new_occupied_node;
-    //     printf("occupied: %p\n", ret);
-    // }
+    if (ret != NULL)
+    {
+        occupied_node *new_occupied_node = NULL;
+        printf("head_occupied: %p\n", head_occupied);
+        new_occupied_node->ptr = (uintptr_t)ret;
+        new_occupied_node->next = head_occupied->next;
+        new_occupied_node->prev = head_occupied;
+        head_occupied->next = new_occupied_node;
+        printf("occupied: %p\n", ret);
+    }
 
     unlock(&kernel_lock);
     return ret;
