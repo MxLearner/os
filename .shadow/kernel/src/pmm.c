@@ -95,6 +95,7 @@ static void *kalloc(size_t size)
         new_occupied_node->next = head_occupied->next;
         new_occupied_node->prev = head_occupied;
         head_occupied->next = new_occupied_node;
+        printf("occupied: %p\n", ret);
     }
 
     unlock(&kernel_lock);
