@@ -13,6 +13,10 @@ static void os_run()
     {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
+    void *ptr = kalloc(100);
+    printf("kalloc: %p\n", ptr);
+    kfree(ptr);
+    printf("kfree: %p\n", ptr);
     while (1)
         ;
 }
