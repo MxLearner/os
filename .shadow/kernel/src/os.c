@@ -11,7 +11,7 @@ static void os_run()
     {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 10; i++)
     {
         size_t size = 12345678 + i;
         void *ptr = pmm->alloc(size);
