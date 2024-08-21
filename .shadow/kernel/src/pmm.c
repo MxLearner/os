@@ -61,6 +61,7 @@ static void *kalloc(size_t size)
     while (current != NULL)
     {
         void *ptr = (void *)current + sizeof(free_node);
+        printf("ptr: %p\n", ptr);
         ptr = (void *)(((uintptr_t)ptr + size - 1) & ~(size - 1));
         size_t total_size = (uintptr_t)ptr + size - (uintptr_t)current;
         if (total_size <= current->size)
