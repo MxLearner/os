@@ -37,6 +37,7 @@ void unlock(LOCK *lock)
 
 static void *kalloc(size_t size)
 {
+    printf("size: %d\n", size);
     if (size == 0 || size > MAX_KALLOC_SIZE)
     {
         return NULL;
