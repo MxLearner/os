@@ -49,23 +49,23 @@ static void *kalloc(size_t size)
     {
         size = (size + 63) & ~63;
     }
-    printf("kalloc: %d\n", size);
+    // printf("kalloc: %d\n", size);
     lock(&kernel_lock);
     free_node *current = head;
     void *ret = NULL;
     while (current != NULL)
     {
         void *ptr = (void *)current + sizeof(free_node);
-        printf("ptr: %p\n", ptr);
+        // printf("ptr: %p\n", ptr);
         ptr = (void *)(((uintptr_t)ptr + size - 1) & ~(size - 1));
         size_t total_size = (uintptr_t)ptr + size - (uintptr_t)current;
-        printf("total_size: %d\n", total_size);
+        // printf("total_size: %d\n", total_size);
         if (total_size <= current->size)
         {
             if (total_size + sizeof(free_node) <= current->size)
             {
                 free_node *new_free_node = (free_node *)((uintptr_t)ptr + size);
-                printf("new_free_node: %p\n", new_free_node);
+                // printf("new_free_node: %p\n", new_free_node);
                 new_free_node->size = current->size - total_size;
                 new_free_node->next = current->next;
                 new_free_node->prev = current;
@@ -76,9 +76,9 @@ static void *kalloc(size_t size)
                 current->next = new_free_node;
             }
             current->size = (uintptr_t)ptr - (uintptr_t)current - sizeof(free_node);
-            printf("current->size: %d\n", current->size);
+            // printf("current->size: %d\n", current->size);
             ret = ptr;
-            printf("ret: %p\n", ret);
+            // printf("ret: %p\n", ret);
             break;
         }
         current = current->next;
@@ -86,7 +86,7 @@ static void *kalloc(size_t size)
     if (ret != NULL)
     {
         ptrArray[ptrCount++] = ret;
-        printf("occupied: %p\n", ret);
+        // printf("occupied: %p\n", ret);
     }
 
     unlock(&kernel_lock);
