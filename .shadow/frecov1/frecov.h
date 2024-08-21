@@ -14,14 +14,15 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-//#define DEBUG
+#define DEBUG
 #include "debug.h"
 #include "bmp.h"
 #include "fat32.h"
 
 #define FOLDER "./recov"
 
-struct DataSeg {
+struct DataSeg
+{
   void *head;
   bool eof;
   struct Image *holder;
@@ -29,7 +30,8 @@ struct DataSeg {
   struct DataSeg *next;
 };
 
-struct Image {
+struct Image
+{
   char name[128];
   char sha1[128];
   size_t size;
@@ -40,7 +42,8 @@ struct Image {
   struct Image *next;
 };
 
-enum ClusterTypes {
+enum ClusterTypes
+{
   TYPE_FDT, // file entry
   TYPE_BMP, // bmp image
   TYPE_EMP  // empty entry
