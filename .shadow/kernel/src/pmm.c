@@ -113,7 +113,7 @@ static void kfree(void *ptr)
                 {
                     current_free->size += (current_free->next->size + sizeof(free_node));
                     current_free->next = current_free->next->next;
-                    printf("free %p\n", ptr);
+                    printf("ptrCount &d ,free %p\n", ptrCount, ptr);
                     break;
                 }
             }
