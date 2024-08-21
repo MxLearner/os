@@ -1,6 +1,4 @@
 #include <common.h>
-void *kalloc(size_t size);
-void kfree(void *ptr);
 
 static void os_init()
 {
@@ -13,9 +11,9 @@ static void os_run()
     {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
-    void *ptr = kalloc(100);
+    void *ptr = pmm->alloc(100);
     printf("kalloc: %p\n", ptr);
-    kfree(ptr);
+    pmm->free(ptr);
     printf("kfree: %p\n", ptr);
     while (1)
         ;
