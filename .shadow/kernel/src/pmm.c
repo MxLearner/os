@@ -54,6 +54,7 @@ static void *kalloc(size_t size)
     {
         size = (size + 63) & ~63;
     }
+    printf("kalloc: %d\n", size);
     lock(&kernel_lock);
     free_node *current = head;
     void *ret = NULL;

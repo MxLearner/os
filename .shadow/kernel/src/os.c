@@ -13,8 +13,8 @@ static void os_run()
     }
     void *ptr = pmm->alloc(100);
     printf("kalloc: %p\n", ptr);
-    // pmm->free(ptr);
-    // printf("kfree: %p\n", ptr);
+    pmm->free(ptr);
+    printf("kfree: %p\n", ptr);
     while (1)
         ;
 }
