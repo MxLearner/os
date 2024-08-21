@@ -88,15 +88,15 @@ static void *kalloc(size_t size)
         }
         current = current->next;
     }
-    if (ret != NULL)
-    {
-        occupied_node *new_occupied_node = NULL;
-        new_occupied_node->ptr = (uintptr_t)ret;
-        new_occupied_node->next = head_occupied->next;
-        new_occupied_node->prev = head_occupied;
-        head_occupied->next = new_occupied_node;
-        printf("occupied: %p\n", ret);
-    }
+    // if (ret != NULL)
+    // {
+    //     occupied_node *new_occupied_node = NULL;
+    //     new_occupied_node->ptr = (uintptr_t)ret;
+    //     new_occupied_node->next = head_occupied->next;
+    //     new_occupied_node->prev = head_occupied;
+    //     head_occupied->next = new_occupied_node;
+    //     printf("occupied: %p\n", ret);
+    // }
 
     unlock(&kernel_lock);
     return ret;
@@ -104,31 +104,31 @@ static void *kalloc(size_t size)
 
 static void kfree(void *ptr)
 {
-    if (ptr == NULL)
-    {
-        return;
-    }
-    lock(&kernel_lock);
-    occupied_node *current = head_occupied;
-    while (current != NULL)
-    {
-        if (current->ptr == (uintptr_t)ptr)
-        {
-            free_node *current_free = head;
-            while (current_free->next != NULL)
-            {
-                if ((uintptr_t)current_free < (uintptr_t)ptr && (uintptr_t)current_free->next > (uintptr_t)ptr)
-                {
-                    current_free->size += (current_free->next->size + sizeof(free_node));
-                    current_free->next = current_free->next->next;
-                    printf("free %p\n", ptr);
-                    break;
-                }
-            }
-        }
-        current = current->next;
-    }
-    unlock(&kernel_lock);
+    // if (ptr == NULL)
+    // {
+    //     return;
+    // }
+    // lock(&kernel_lock);
+    // occupied_node *current = head_occupied;
+    // while (current != NULL)
+    // {
+    //     if (current->ptr == (uintptr_t)ptr)
+    //     {
+    //         free_node *current_free = head;
+    //         while (current_free->next != NULL)
+    //         {
+    //             if ((uintptr_t)current_free < (uintptr_t)ptr && (uintptr_t)current_free->next > (uintptr_t)ptr)
+    //             {
+    //                 current_free->size += (current_free->next->size + sizeof(free_node));
+    //                 current_free->next = current_free->next->next;
+    //                 printf("free %p\n", ptr);
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //     current = current->next;
+    // }
+    // unlock(&kernel_lock);
 }
 
 static void pmm_init()
