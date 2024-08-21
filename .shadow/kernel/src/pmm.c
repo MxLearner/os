@@ -7,102 +7,60 @@ typedef struct free_node
     struct free_node *prev;
 } free_node;
 
-typedef struct occupied_node
+free_node *head = NULL;
+
+typedef int LOCK;
+LOCK kernel_lock;
+
+const size_t MAX_KALLOC_SIZE = 16 * 1024 * 1024;
+
+const LOCK LOCKED = 1;
+const LOCK UNLOCKED = 0;
+
+void lock_init(LOCK *lock)
 {
-    size_t size;
-    struct free_node *prev;
-} occupied_node;
+    *lock = UNLOCKED;
+}
 
-free_node *head;
-
-typedef int lock_t;
-lock_t kernel_lock;
-
-#define OK 1                             // 说明这把锁能用
-#define FAILED 0                         // 说明这把锁已经被占有了
-#define Max_kalloc_size 16 * 1024 * 1024 // 大于16MiB的内存分配请求可以直接拒绝
-
-// my implementation of lock, spin_lock()
-void lock(lock_t *my_lock)
+void lock(LOCK *lock)
 {
-    while (atomic_xchg(my_lock, FAILED) != OK)
-    {
+    while (atomic_xchg(lock, LOCKED))
         ;
-    }
-    assert(*my_lock == FAILED);
 }
-
-void unlock(lock_t *my_lock)
+void unlock(LOCK *lock)
 {
-    atomic_xchg(my_lock, OK);
-}
-
-void lock_init(lock_t *my_lock)
-{
-    *my_lock = OK;
+    atomic_xchg(lock, UNLOCKED);
 }
 
 static void *kalloc(size_t size)
 {
-    if (size > Max_kalloc_size)
-        return NULL; // 直接拒绝
-    else
-    { // 小内存分配,频繁的内存分配请求
-        if (size < 32)
-            size = 32;
-        else
-        {
-            size_t new_size = 32;
-            while (new_size < size)
-                new_size = new_size << 1;
-            size = new_size;
-        }
-        // 一把大锁保平安
-        lock(&kernel_lock);
-        free_node *h = head;
-        free_node *new_node = NULL;
-        while (h != NULL)
-        { // 尽量都往后找
-            assert(h->size >= sizeof(free_node));
-            if (h->size >= size + sizeof(occupied_node) + sizeof(free_node))
-            {
-                new_node = h;
-            }
-            h = h->next;
-        }
-        if (new_node == NULL)
-        {
-            unlock(&kernel_lock);
-            return NULL;
-        }
-        void *ret = (void *)new_node + new_node->size - size;
-        if ((uintptr_t)ret % size == 0)
-        {
-            new_node->size -= size + sizeof(occupied_node);
-            occupied_node *ocp_node = (occupied_node *)((void *)ret - sizeof(occupied_node));
-            ocp_node->prev = new_node;
-            ocp_node->size = size;
-            unlock(&kernel_lock);
-            return ret;
-        }
-        else
-        {
-            size_t num = (uintptr_t)ret / size;
-            void *new_ret = (void *)(num * size);
-            if ((uintptr_t)new_ret - (uintptr_t)new_node < sizeof(free_node) + sizeof(occupied_node))
-            {
-                unlock(&kernel_lock);
-                return NULL;
-            }
-            occupied_node *ocp_node = (occupied_node *)((void *)new_ret - sizeof(occupied_node));
-            size_t space_used = (uintptr_t)new_node + new_node->size - (uintptr_t)new_ret;
-            ocp_node->size = space_used;
-            ocp_node->prev = new_node;
-            new_node->size -= space_used + sizeof(occupied_node);
-            unlock(&kernel_lock);
-            return new_ret;
-        }
-    }
+    // if (size == 0)
+    //     return NULL;
+    // if (size > MAX_KALLOC_SIZE)
+    //     return NULL;
+    // if (size < 64)
+    // {
+    //     size = 64;
+    // }
+    // else
+    // {
+    //     size = (size + 63) & ~63;
+    // }
+    // lock(&kernel_lock);
+    // free_node *current = head;
+    // free_node *new_free_node = NULL;
+    // while (current != NULL)
+    // {
+    //     if (current->size >= size)
+    //     {
+    //         void *ptr = (void *)current + sizeof(free_node);
+    //         if ((size_t)ptr % size != 0)
+    //         {
+    //             ptr = ptr + (size - (size_t)ptr % size);
+    //         }
+    //     }
+    // }
+    return NULL;
 }
 
 static void kfree(void *ptr)
