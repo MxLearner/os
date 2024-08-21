@@ -34,39 +34,53 @@ void unlock(LOCK *lock)
 
 static void *kalloc(size_t size)
 {
-    // if (size == 0)
-    //     return NULL;
-    // if (size > MAX_KALLOC_SIZE)
-    //     return NULL;
-    // if (size < 64)
-    // {
-    //     size = 64;
-    // }
-    // else
-    // {
-    //     size = (size + 63) & ~63;
-    // }
-    // lock(&kernel_lock);
-    // free_node *current = head;
-    // free_node *new_free_node = NULL;
-    // while (current != NULL)
-    // {
-    //     if (current->size >= size)
-    //     {
-    //         void *ptr = (void *)current + sizeof(free_node);
-    //         if ((size_t)ptr % size != 0)
-    //         {
-    //             ptr = ptr + (size - (size_t)ptr % size);
-    //         }
-    //     }
-    // }
-    return NULL;
+    if (size == 0 || size > MAX_KALLOC_SIZE)
+    {
+        return NULL;
+    }
+    if (size < 64)
+    {
+        size = 64;
+    }
+    else
+    {
+        size = (size + 63) & ~63;
+    }
+    lock(&kernel_lock);
+    free_node *current = head;
+    void *ret = NULL;
+    while (current != NULL)
+    {
+        void *ptr = (void *)current + sizeof(free_node);
+        ptr = (void *)(((uintptr_t)ptr + size - 1) & ~(size - 1));
+        size_t total_size = (uintptr_t)ptr + size - (uintptr_t)current;
+        if (total_size <= current->size)
+        {
+            if (total_size + sizeof(free_node) <= current->size)
+            {
+                // 足够空间插入一个新的空闲节点
+                free_node *new_free_node = (free_node *)((uintptr_t)ptr + size);
+                new_free_node->size = current->size - total_size;
+                new_free_node->next = current->next;
+                new_free_node->prev = current;
+                if (current->next)
+                {
+                    current->next->prev = new_free_node;
+                }
+                current->next = new_free_node;
+            }
+            current->size = (uintptr_t)ptr - (uintptr_t)current - sizeof(free_node);
+            ret = ptr;
+            break;
+        }
+        current = current->next;
+    }
+    return ret;
 }
 
 static void kfree(void *ptr)
 {
     // TODO
-    // You can add more .c files to the repo.
 }
 
 static void pmm_init()
