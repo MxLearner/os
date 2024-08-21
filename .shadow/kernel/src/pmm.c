@@ -7,7 +7,15 @@ typedef struct free_node
     struct free_node *prev;
 } free_node;
 
+typedef struct occupied_node
+{
+    uintptr_t ptr;
+    struct occupied_node *next;
+    struct occupied_node *prev;
+} occupied_node;
+
 free_node *head = NULL;
+occupied_node *head_occupied = NULL;
 
 typedef int LOCK;
 LOCK kernel_lock;
@@ -58,7 +66,6 @@ static void *kalloc(size_t size)
         {
             if (total_size + sizeof(free_node) <= current->size)
             {
-                // 足够空间插入一个新的空闲节点
                 free_node *new_free_node = (free_node *)((uintptr_t)ptr + size);
                 new_free_node->size = current->size - total_size;
                 new_free_node->next = current->next;
@@ -75,12 +82,45 @@ static void *kalloc(size_t size)
         }
         current = current->next;
     }
+    if (ret != NULL)
+    {
+        occupied_node *new_occupied_node = NULL;
+        new_occupied_node->ptr = (uintptr_t)ret;
+        new_occupied_node->next = head_occupied->next;
+        new_occupied_node->prev = head_occupied;
+        head_occupied->next = new_occupied_node;
+    }
+
+    unlock(&kernel_lock);
     return ret;
 }
 
 static void kfree(void *ptr)
 {
-    // TODO
+    if (ptr == NULL)
+    {
+        return;
+    }
+    lock(&kernel_lock);
+    occupied_node *current = head_occupied;
+    while (current != NULL)
+    {
+        if (current->ptr == (uintptr_t)ptr)
+        {
+            free_node *current_free = head;
+            while (current_free->next != NULL)
+            {
+                if ((uintptr_t)current_free < (uintptr_t)ptr && (uintptr_t)current_free->next > (uintptr_t)ptr)
+                {
+                    current_free->size += (current_free->next->size + sizeof(free_node));
+                    current_free->next = current_free->next->next;
+                    break;
+                }
+            }
+        }
+        current = current->next;
+    }
+    unlock(&kernel_lock);
 }
 
 static void pmm_init()
