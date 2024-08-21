@@ -16,7 +16,7 @@ static void os_run()
         size_t size = 12345678 + i;
         void *ptr = pmm->alloc(size);
         printf("kalloc_ptr: %p\n", ptr);
-        pmm->free(ptr);
+        // pmm->free(ptr);
     }
     while (1)
         ;
