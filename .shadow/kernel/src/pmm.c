@@ -70,6 +70,7 @@ static void *kalloc(size_t size)
             if (total_size + sizeof(free_node) <= current->size)
             {
                 free_node *new_free_node = (free_node *)((uintptr_t)ptr + size);
+                printf("new_free_node: %p\n", new_free_node);
                 new_free_node->size = current->size - total_size;
                 new_free_node->next = current->next;
                 new_free_node->prev = current;
