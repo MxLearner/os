@@ -13,7 +13,7 @@ static void os_run()
     }
     for (int i = 0; i < 2; i++)
     {
-        size_t size = 123456 + i;
+        size_t size = 100 + i;
         void *ptr = pmm->alloc(size);
         printf("kalloc: %p\n", ptr);
         pmm->free(ptr);
