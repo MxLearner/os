@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
   assert(!argv[argc]);
   if (v)
   {
-    fprintf(stderr, "pstree made by qiyi Wang\n");
+    fprintf(stderr, "pstree made by Qiyi Wang\n");
     return 0;
   }
   list_proc_dirs(1, p, n, 1);
