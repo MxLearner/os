@@ -23,23 +23,23 @@
 
 struct DataSeg
 {
-  void *head;
-  bool eof;
-  struct Image *holder;
-  struct DataSeg *prev;
-  struct DataSeg *next;
+  void *head;           // 指向数据段起始位置的指针
+  bool eof;             // 是否到达文件末尾的标志
+  struct Image *holder; // 指向持有该数据段的图像的指针
+  struct DataSeg *prev; // 指向上一个数据段的指针
+  struct DataSeg *next; // 指向下一个数据段的指针
 };
 
 struct Image
 {
-  char name[128];
-  char sha1[128];
-  size_t size;
-  int clus;
-  FILE *file;
-  struct BMP *bmp;
-  struct Image *prev;
-  struct Image *next;
+  char name[128];     // 图像文件的名称
+  char sha1[128];     // 图像的 SHA1 哈希值
+  size_t size;        // 图像的大小
+  int clus;           // 图像的起始簇号
+  FILE *file;         // 文件指针，用于文件 I/O 操作
+  struct BMP *bmp;    // 指向 BMP 图像结构体的指针
+  struct Image *prev; // 指向上一个图像的指针
+  struct Image *next; // 指向下一个图像的指针
 };
 
 enum ClusterTypes
