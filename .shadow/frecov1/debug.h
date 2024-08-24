@@ -22,20 +22,20 @@
 #define BG_CYAN "\033[1;46m"
 #define BG_WHITE "\033[1;47m"
 
-// #define Assert(cond, format, ...)                                     \
-//   do                                                                  \
-//   {                                                                   \
-//     if (!(cond))                                                      \
-//     {                                                                 \
-//       CLog(BG_RED, format, ##__VA_ARGS__);                            \
-//       CLog(BG_RED, "Last errno was %d (%s)", errno, strerror(errno)); \
-//       assert(cond);                                                   \
-//       errno = 0;                                                      \
-//     }                                                                 \
-//   } while (0)
+#define Assert(cond, format, ...)                                     \
+  do                                                                  \
+  {                                                                   \
+    if (!(cond))                                                      \
+    {                                                                 \
+      CLog(BG_RED, format, ##__VA_ARGS__);                            \
+      CLog(BG_RED, "Last errno was %d (%s)", errno, strerror(errno)); \
+      assert(cond);                                                   \
+      errno = 0;                                                      \
+    }                                                                 \
+  } while (0)
 
-// #define Panic(format, ...)             \
-//   CLog(BG_RED, format, ##__VA_ARGS__); \
-//   assert(0)
+#define Panic(format, ...)             \
+  CLog(BG_RED, format, ##__VA_ARGS__); \
+  assert(0)
 
-// #endif
+#endif
