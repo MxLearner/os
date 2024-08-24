@@ -69,7 +69,6 @@ void *huge_memory_alloc(size_t size)
     while (new_size < size)
         new_size = new_size << 1;
     size = new_size;
-    // 一把大锁保平安
     lock(&kernel_lock);
     free_node *h = head;
     free_node *new_node = NULL;
@@ -127,12 +126,11 @@ void *huge_memory_alloc1(size_t size)
             new_size = new_size << 1;
         size = new_size;
     }
-    // 一把大锁保平安
     lock(&kernel_lock);
     free_node *h = head;
     free_node *new_node = NULL;
     while (h != NULL)
-    { // 尽量都往后找
+    {
         assert(h->size >= sizeof(free_node));
         if (h->size >= size + sizeof(occupied_node) + sizeof(free_node))
         {
