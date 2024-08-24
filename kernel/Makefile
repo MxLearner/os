@@ -4,6 +4,7 @@ INC_PATH       := include/ framework/
 
 export AM_HOME := $(PWD)/../abstract-machine
 ifeq ($(ARCH),)
+# export ARCH    := x86-qemu
 # export ARCH    := x86_64-qemu
 export ARCH    := native
 endif

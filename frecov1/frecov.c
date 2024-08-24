@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     saving_files = argc > 2 && !strcmp(argv[2], "--save");
 
     disk = disk_load_fat(argv[1]);
-
+    // 是否将图片保存到文件夹中
     if (saving_files)
     {
       struct stat st = {};
@@ -39,7 +39,7 @@ struct Disk *disk_load_fat(const char *file)
   int fd = 0;
   struct stat sb = {};
   struct Disk *ret = malloc(sizeof(struct Disk));
-
+  // 加载文件镜像
   fd = open(file, O_RDONLY);
   Assert(fd, "failed to open file");
   Assert(!fstat(fd, &sb), "fstat failed");
@@ -54,16 +54,19 @@ struct Disk *disk_load_fat(const char *file)
 
 void disk_get_sections(struct Disk *disk)
 {
+  // 获取 boot sector，共 512 字节
   disk->mbr = (struct MBR *)disk->head;
   Assert(disk->mbr->SignatureWord == 0xaa55, "Expecting signature 0xaa55, got 0x%x", disk->mbr->SignatureWord);
-
+  // 获取 FSInfo
   disk->fsinfo = (struct FSInfo *)((void *)disk->mbr + 512);
-
+  // 计算从磁盘开始到第一个FAT表的偏移量
   size_t offst = (size_t)disk->mbr->BPB_BytsPerSec * disk->mbr->BPB_RsvdSecCnt;
+  // 计算单个FAT表的大小
   size_t fatsz = (size_t)disk->mbr->BPB_BytsPerSec * disk->mbr->BPB_FATSz32;
+  // 两个FAT表的地址
   disk->fat[0] = (struct FAT *)(((void *)disk->head) + offst);
   disk->fat[1] = (struct FAT *)(((void *)disk->head) + offst + fatsz * (disk->mbr->BPB_NumFATs - 1));
-
+  // 计算数据区的偏移量
   offst += (size_t)fatsz * disk->mbr->BPB_NumFATs;
   offst += (size_t)disk->mbr->BPB_BytsPerSec * (disk->mbr->BPB_RootClus - 2) * disk->mbr->BPB_SecPerClus;
   disk->data = (((void *)disk->head) + offst);
@@ -90,7 +93,7 @@ void recover_images()
   size_t clusz = (size_t)disk->mbr->BPB_BytsPerSec * disk->mbr->BPB_SecPerClus;
   // 计算每个簇的文件数
   int nr_clu = clusz / 32;
-
+  // 从数据区的开始遍历每一个簇
   for (void *p = disk->data; p < disk->tail; p += clusz)
   {
     switch (get_cluster_type(p, nr_clu))
@@ -183,6 +186,7 @@ void handle_fdt(void *c, int nr, bool force)
 {
   if (c)
   {
+    // 添加新的FDT簇到链表
     struct DataSeg *d = malloc(sizeof(struct DataSeg));
     d->head = c;
     d->eof = false;
@@ -201,6 +205,7 @@ void handle_fdt(void *c, int nr, bool force)
     {
       if (handle_fdt_aux(d->head, nr, force))
       {
+        // 从链表中删除已经处理过的FDT簇
         d->prev->next = d->next;
         d->next->prev = d->prev;
         free(d);
@@ -215,6 +220,7 @@ bool handle_fdt_aux(void *c, int nr, bool force)
   struct FDT *f = (struct FDT *)c;
   if (force)
   {
+    // 表示从最末尾开始构建文件名。
     pos = 127;
   }
   else
@@ -258,6 +264,7 @@ bool handle_fdt_aux(void *c, int nr, bool force)
         size_t len = strlen(file_name + pos);
         if (!strncmp(file_name + pos + len - 4, ".bmp", 4))
         {
+          // 该文件是一个 BMP 图像
           uint32_t clus = ((uint32_t)f[i].fst_clus_HI << 16) | f[i].fst_clus_LO;
           if (clus)
           {
@@ -269,6 +276,7 @@ bool handle_fdt_aux(void *c, int nr, bool force)
             image->file = NULL;
             image->bmp = malloc(sizeof(struct BMP));
 
+            // 放到图像链表中
             image->prev = image_list.prev;
             image->next = &image_list;
             image_list.prev = image;
@@ -286,6 +294,7 @@ bool handle_fdt_aux(void *c, int nr, bool force)
 
 void handle_image(struct Image *image, size_t sz, int nr)
 {
+  // 计算图像数据的实际内存地址。
   void *clus = disk->data + sz * (image->clus - disk->mbr->BPB_RootClus);
   struct BMP_Header *header = (struct BMP_Header *)clus;
   struct BMP_Info *info = (struct BMP_Info *)(header + 1);
@@ -357,7 +366,7 @@ void handle_image(struct Image *image, size_t sz, int nr)
 
   if (pid == 0)
   {
-    // child process
+    // child process，计算图像的 SHA1 哈希值
     close(fd0[1]);
     close(fd1[0]);
     dup2(fd0[0], 0);

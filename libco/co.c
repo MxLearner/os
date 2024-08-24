@@ -27,6 +27,11 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
 #endif
     );
 }
+// "movq %%rsp,-0x10(%0);"      // 保存当前栈指针 (`rsp`) 到新栈的栈顶位置减去0x10处。
+//     "leaq -0x20(%0), %%rsp;" // 更新栈指针 (`rsp`) 为新栈顶 (`sp`) 减去0x20（16字节对齐）。
+//     "movq %2, %%rdi ;"       // 将参数 `arg` 传递给寄存器 `rdi`，这是x86_64架构下第一个函数参数的标准寄存器。
+//     "call *%1;"              // 调用目标函数 `entry`。
+//     "movq -0x10(%0) ,%%rsp;" // 函数返回后，恢复原来的栈指针 (`rsp`)。
 
 enum co_status
 {
