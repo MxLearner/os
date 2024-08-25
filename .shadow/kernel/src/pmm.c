@@ -3,8 +3,6 @@
 freenode_t *head;
 // freenode_t *head_huge;
 void *page_store;
-
-#ifndef TEST
 #define NOPE 1
 #define YES 0
 typedef int lock_t;
@@ -24,42 +22,15 @@ void lockinit(lock_t *locked)
 {
 	*locked = YES;
 }
-#else
-#include <stdint.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <assert.h>
-#include <pthread.h>
-typedef pthread_mutex_t lock_t;
-void lock(lock_t *locked)
+
+typedef struct pagelist_t //每个CPU或线程各有一个的Pagelist，串起来的页列表
 {
-	int rc = pthread_mutex_lock(locked);
-	assert(rc == 0);
-}
-void unlock(lock_t *locked)
-{
-	int rc = pthread_mutex_unlock(locked);
-	assert(rc == 0);
-}
-void lockinit(lock_t *locked)
-{
-	pthread_mutex_init(locked, NULL);
-}
-#include <sys/syscall.h>
-#include <unistd.h>
-pid_t gettid()
-{
-	return syscall(SYS_gettid);
-}
-#endif
-typedef struct pagelist_t // 每个CPU或线程各有一个的Pagelist，串起来的页列表
-{
-	pageheader_t *pagehead; // 这个CPU的所属page链表
+	pageheader_t *pagehead; //这个CPU的所属page链表
 	lock_t lock;
 } pagelist_t;
 typedef struct thread_alloc_list_t
 {
-	lock_t th_lock; // 大锁,分配页时候用到的锁
+	lock_t th_lock; //大锁,分配页时候用到的锁
 	int thread_count;
 	unsigned threadpage_index[THREADMAX];
 	pagelist_t thread_page[THREADMAX];
@@ -68,11 +39,8 @@ typedef struct thread_alloc_list_t
 
 lock_t heap_lock;
 
-#ifndef TEST
 pagelist_t cpupagelist[16];
-#else
-thread_alloc_list_t th_alloclist;
-#endif
+
 void allockpage(pageheader_t **pagehead) // page = 64KiB
 {
 	freenode_t *oldfreenode = NULL;
@@ -266,7 +234,7 @@ static void *kalloc(size_t size)
 			return fd;
 		}
 	}
-	else // 这种大小的can alloc的页还没有 slowpath
+	else //这种大小的can alloc的页还没有 slowpath
 	{
 		pageheader_t *pagehead = cpupagelist[cpuno].pagehead;
 		while (pagehead)
@@ -313,7 +281,7 @@ static void kfree(void *ptr)
 	lock(&cpupagelist[cpu_current()].lock);
 	//---
 	pageheader_t *ph = NULL;
-	bool flag = false;
+	bool flag=false;
 	for (size_t i = 0; i < cpu_count(); i++)
 	{
 		ph = cpupagelist[i].pagehead;
@@ -321,12 +289,12 @@ static void kfree(void *ptr)
 		{
 			if ((uintptr_t)ph < (uintptr_t)ptr && (uintptr_t)ptr < (uintptr_t)ph + 64 * 1024)
 			{
-				flag = true;
+				flag=true;
 				break;
 			}
 			ph = ph->next;
 		}
-		if (flag == true)
+		if(flag==true)
 		{
 			break;
 		}
@@ -334,7 +302,7 @@ static void kfree(void *ptr)
 	//---
 	if (ph)
 	{
-		assert(flag == true);
+		assert(flag==true);
 		memset(ptr, 0, ph->size);
 		pagefreenode_t *after = NULL;
 		pagefreenode_t *before = NULL;
@@ -414,7 +382,7 @@ static void kfree(void *ptr)
 		unlock(&cpupagelist[cpu_current()].lock);
 		return;
 	}
-	else // 分配的大内存how释放
+	else //分配的大内存how释放
 	{
 		unlock(&cpupagelist[cpu_current()].lock);
 		lock(&heap_lock);
@@ -488,7 +456,20 @@ static void kfree(void *ptr)
 		return;
 	}
 }
+static void *kalloc_safe(size_t size) {
+  bool i = ienabled();
+  iset(false);
+  void *ret = kalloc(size);
+  if (i) iset(true);
+  return ret;
+}
 
+static void kfree_safe(void *ptr) {
+  int i = ienabled();
+  iset(false);
+  kfree(ptr);
+  if (i) iset(true);
+}
 // 框架代码中的 pmm_init (在 AbstractMachine 中运行)
 static void pmm_init()
 {
@@ -509,6 +490,6 @@ static void pmm_init()
 
 MODULE_DEF(pmm) = {
 	.init = pmm_init,
-	.alloc = kalloc,
-	.free = kfree,
+	.alloc = kalloc_safe,
+	.free = kfree_safe,
 };
