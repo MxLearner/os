@@ -44,13 +44,13 @@ static void input_keydown(device_t *dev, AM_INPUT_KEYBRD_T key) {
   if (key.keydown) {
     // keydown
     switch (key.keycode) {
-      case AM_KEY_CAPSLOCK: in->capslock     ^= 1; break;
-      case AM_KEY_LCTRL:    in->ctrl_down[0]  = 1; break;
-      case AM_KEY_RCTRL:    in->ctrl_down[1]  = 1; break;
-      case AM_KEY_LALT:     in->alt_down[0]   = 1; break;
-      case AM_KEY_RALT:     in->alt_down[1]   = 1; break;
-      case AM_KEY_LSHIFT:   in->shift_down[0] = 1; break;
-      case AM_KEY_RSHIFT:   in->shift_down[1] = 1; break;
+      case AM_KEY_CAPSLOCK: in->capslock     ^= 1; break; 
+      case AM_KEY_LCTRL:    in->ctrl_down[0]  = 1; break; 
+      case AM_KEY_RCTRL:    in->ctrl_down[1]  = 1; break; 
+      case AM_KEY_LALT:     in->alt_down[0]   = 1; break; 
+      case AM_KEY_RALT:     in->alt_down[1]   = 1; break; 
+      case AM_KEY_LSHIFT:   in->shift_down[0] = 1; break; 
+      case AM_KEY_RSHIFT:   in->shift_down[1] = 1; break; 
       default:
         ch = keymap[key.keycode][0];
         if (ch) {
@@ -75,12 +75,12 @@ static void input_keydown(device_t *dev, AM_INPUT_KEYBRD_T key) {
   } else {
     // keyup
     switch (key.keycode) {
-      case AM_KEY_LCTRL:  in->ctrl_down[0]  = 0; break;
-      case AM_KEY_RCTRL:  in->ctrl_down[1]  = 0; break;
-      case AM_KEY_LALT:   in->alt_down[0]   = 0; break;
-      case AM_KEY_RALT:   in->alt_down[1]   = 0; break;
-      case AM_KEY_LSHIFT: in->shift_down[0] = 0; break;
-      case AM_KEY_RSHIFT: in->shift_down[1] = 0; break;
+      case AM_KEY_LCTRL:  in->ctrl_down[0]  = 0; break; 
+      case AM_KEY_RCTRL:  in->ctrl_down[1]  = 0; break; 
+      case AM_KEY_LALT:   in->alt_down[0]   = 0; break; 
+      case AM_KEY_RALT:   in->alt_down[1]   = 0; break; 
+      case AM_KEY_LSHIFT: in->shift_down[0] = 0; break; 
+      case AM_KEY_RSHIFT: in->shift_down[1] = 0; break; 
     }
   }
 }
@@ -92,8 +92,8 @@ static Context *input_notify(Event ev, Context *context) {
 
 static int input_init(device_t *dev) {
   input_t *in = dev->ptr;
-  *in = (input_t) {};
   in->events = pmm->alloc(sizeof(in->events[0]) * NEVENTS);
+  in->front = in->rear = 0;
 
   kmt->spin_init(&in->lock, "/dev/input lock");
   kmt->sem_init(&in->event_sem, "events in queue", 0);
@@ -126,7 +126,7 @@ devops_t input_ops = {
 
 static char keymap[256][2] = {
   [AM_KEY_0] = { '0', ')' },
-  [AM_KEY_1] = { '1', '!' },
+  [AM_KEY_1] = { '1', '!' }, 
   [AM_KEY_2] = { '2', '@' },
   [AM_KEY_3] = { '3', '#' },
   [AM_KEY_4] = { '4', '$' },
@@ -175,7 +175,7 @@ static char keymap[256][2] = {
   [AM_KEY_SLASH]        = { '/', '?' },
   [AM_KEY_SPACE]        = { ' ', ' ' },
   [AM_KEY_BACKSPACE]    = { '\b', '\b' },
-};
+};  
 
 // input daemon
 // ------------------------------------------------------------------
