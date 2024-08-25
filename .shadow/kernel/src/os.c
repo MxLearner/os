@@ -6,7 +6,7 @@ static void test_pmm()
     {
         size_t size = 12 * (i + 1);
         void *ptr = pmm->alloc(size);
-        printf("kalloc_ptr: %p\n", ptr);
+        printf("kalloc_ptr: %x\n", ptr);
         // pmm->free(ptr);
     }
 }
