@@ -388,7 +388,7 @@ static void pmm_init()
     uintptr_t pmsize = ((uintptr_t)heap.end - (uintptr_t)heap.start);
 
     printf(
-        "Got %d MiB heap: [%p, %p)\n",
+        "Got %d MiB heap: [%x, %x)\n",
         pmsize >> 20, heap.start, heap.end);
 
     for (int i = 0; i <= 7; i++)
