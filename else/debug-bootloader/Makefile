@@ -7,7 +7,7 @@ include $(AM_HOME)/Makefile
 debug:
 	qemu-system-i386 -s -S -machine accel=tcg -smp "1,sockets=1" \
 		-drive format=raw,file=build/hello-x86-qemu &
-	gdb -x debug.py
+	gdb -x /home/mx/os-workbench/else/debug-bootloader/debug.py
 
 log:
 	make -nB \

@@ -23,14 +23,14 @@ void lockinit(lock_t *locked)
 	*locked = YES;
 }
 
-typedef struct pagelist_t //每个CPU或线程各有一个的Pagelist，串起来的页列表
+typedef struct pagelist_t // 每个CPU或线程各有一个的Pagelist，串起来的页列表
 {
-	pageheader_t *pagehead; //这个CPU的所属page链表
+	pageheader_t *pagehead; // 这个CPU的所属page链表
 	lock_t lock;
 } pagelist_t;
 typedef struct thread_alloc_list_t
 {
-	lock_t th_lock; //大锁,分配页时候用到的锁
+	lock_t th_lock; // 大锁,分配页时候用到的锁
 	int thread_count;
 	unsigned threadpage_index[THREADMAX];
 	pagelist_t thread_page[THREADMAX];
@@ -234,7 +234,7 @@ static void *kalloc(size_t size)
 			return fd;
 		}
 	}
-	else //这种大小的can alloc的页还没有 slowpath
+	else // 这种大小的can alloc的页还没有 slowpath
 	{
 		pageheader_t *pagehead = cpupagelist[cpuno].pagehead;
 		while (pagehead)
@@ -281,7 +281,7 @@ static void kfree(void *ptr)
 	lock(&cpupagelist[cpu_current()].lock);
 	//---
 	pageheader_t *ph = NULL;
-	bool flag=false;
+	bool flag = false;
 	for (size_t i = 0; i < cpu_count(); i++)
 	{
 		ph = cpupagelist[i].pagehead;
@@ -289,12 +289,12 @@ static void kfree(void *ptr)
 		{
 			if ((uintptr_t)ph < (uintptr_t)ptr && (uintptr_t)ptr < (uintptr_t)ph + 64 * 1024)
 			{
-				flag=true;
+				flag = true;
 				break;
 			}
 			ph = ph->next;
 		}
-		if(flag==true)
+		if (flag == true)
 		{
 			break;
 		}
@@ -302,7 +302,7 @@ static void kfree(void *ptr)
 	//---
 	if (ph)
 	{
-		assert(flag==true);
+		assert(flag == true);
 		memset(ptr, 0, ph->size);
 		pagefreenode_t *after = NULL;
 		pagefreenode_t *before = NULL;
@@ -382,7 +382,7 @@ static void kfree(void *ptr)
 		unlock(&cpupagelist[cpu_current()].lock);
 		return;
 	}
-	else //分配的大内存how释放
+	else // 分配的大内存how释放
 	{
 		unlock(&cpupagelist[cpu_current()].lock);
 		lock(&heap_lock);
@@ -456,19 +456,23 @@ static void kfree(void *ptr)
 		return;
 	}
 }
-static void *kalloc_safe(size_t size) {
-  bool i = ienabled();
-  iset(false);
-  void *ret = kalloc(size);
-  if (i) iset(true);
-  return ret;
+static void *kalloc_safe(size_t size)
+{
+	bool i = ienabled();
+	iset(false);
+	void *ret = kalloc(size);
+	if (i)
+		iset(true);
+	return ret;
 }
 
-static void kfree_safe(void *ptr) {
-  int i = ienabled();
-  iset(false);
-  kfree(ptr);
-  if (i) iset(true);
+static void kfree_safe(void *ptr)
+{
+	int i = ienabled();
+	iset(false);
+	kfree(ptr);
+	if (i)
+		iset(true);
 }
 // 框架代码中的 pmm_init (在 AbstractMachine 中运行)
 static void pmm_init()
