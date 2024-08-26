@@ -150,8 +150,7 @@ static void sem_init(sem_t *sem, const char *name, int value)
 {
     kmt->spin_init(&(sem->lock), name);
     sem->count = value;
-    sem->l = 0;
-    sem->r = 0;
+
     strcpy(sem->name, name);
 }
 void sem_wait_base(sem_t *sem)
@@ -169,8 +168,8 @@ void sem_wait_base(sem_t *sem)
         kmt->spin_unlock(&(sem->lock));
         if (!succ)
         {
-            // if (ienabled()) // 如果中断开启
-            yield();
+            if (ienabled()) // 如果中断开启
+                yield();
         }
     }
 }
