@@ -130,8 +130,8 @@ static void kmt_teardown(task_t *task) // 清除任务
 }
 static void kmt_init()
 {
-    os->on_irq(INT_MIN, EVENT_NULL, kmt_context_save); // 注册了中断处理函数,最先
-    os->on_irq(INT_MAX, EVENT_NULL, kmt_schedule);     // 中断中最后被调用
+    os->on_irq(INT_MIN, EVENT_NULL, kmt_context_save); // 上下文保存,最先
+    os->on_irq(INT_MAX, EVENT_NULL, kmt_schedule);     // 调度最后被调用
     for (size_t i = 0; i < 16; i++)
     {
         currents[i] = NULL;
@@ -169,8 +169,8 @@ void sem_wait_base(sem_t *sem)
         kmt->spin_unlock(&(sem->lock));
         if (!succ)
         {
-            if (ienabled()) // 如果中断开启
-                yield();
+            // if (ienabled()) // 如果中断开启
+            yield();
         }
     }
 }
