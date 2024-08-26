@@ -47,8 +47,8 @@ static void spin_lock(spinlock_t *lk)
         if (ienabled())
             yield();
     }
-    for (volatile int i = 0; i < 10000; ++i)
-        ;
+    // for (volatile int i = 0; i < 10000; ++i)
+    //     ;
     push_off(); // disable interrupts to avoid deadlock.
     lk->cpu = cpu_current();
 }
